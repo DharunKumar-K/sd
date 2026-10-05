@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowRush — Student 3 Architecture Diagrams</title>
+  <meta name="description" content="Student 3 diagrams for the GlowRush flash-sale system design hackathon." />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --border: #d7dfeb;
+      --text: #182033;
+      --muted: #5f6b7a;
+      --accent: #3d5fc4;
+      --accent-2: #0f766e;
+      --warning: #a16207;
+      --danger: #b42318;
+      --shadow: 0 12px 34px rgba(31,41,55,.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(61,95,196,.07), transparent 32%),
+        radial-gradient(circle at 90% 10%, rgba(15,118,110,.06), transparent 28%),
+        var(--bg);
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
+      padding: 24px 18px;
+    }
+
+    .brand {
+      padding: 4px 10px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: .2px;
+    }
+
+    .brand p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .nav-title {
+      color: #667085;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: .16em;
+      margin: 18px 10px 8px;
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: #344054;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.35;
+      margin: 2px 0;
+    }
+
+    nav a:hover,
+    nav a:focus-visible {
+      background: #edf2ff;
+      color: white;
+      outline: none;
+    }
+
+    main {
+      width: min(1450px, 100%);
+      margin: 0 auto;
+      padding: 34px clamp(18px, 3vw, 48px) 64px;
+    }
+
+    .hero {
+      padding: 12px 4px 24px;
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .hero h2 {
+      margin: 8px 0 12px;
+      font-size: clamp(29px, 4vw, 48px);
+      line-height: 1.05;
+      max-width: 980px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 980px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin: 20px 0 30px;
+    }
+
+    .pill {
+      background: rgba(17,24,43,.82);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 13px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .pill strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .pill span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    section.diagram {
+      scroll-margin-top: 18px;
+      margin: 24px 0;
+      background: rgba(17,24,43,.78);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(61,95,196,.035), transparent);
+    }
+
+    .section-head h3 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .section-head p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 960px;
+    }
+
+    .mermaid-wrap {
+      padding: 22px;
+      overflow-x: auto;
+      background: #f8fafc;
+    }
+
+    .mermaid {
+      min-width: 760px;
+      color: #182033;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .legend {
+      padding: 12px 20px 18px;
+      color: #667085;
+      font-size: 11px;
+      border-top: 1px solid rgba(215,223,235,.9);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--border);
+      background: #f3f6fb;
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-right: 7px;
+      margin-top: 6px;
+    }
+
+    footer {
+      color: #667085;
+      font-size: 11px;
+      padding: 20px 4px 10px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        height: auto;
+        max-height: none;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 2px 7px;
+      }
+      .principles { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 580px) {
+      .principles { grid-template-columns: 1fr; }
+      nav { grid-template-columns: 1fr; }
+      main { padding-left: 12px; padding-right: 12px; }
+      .mermaid { min-width: 640px; }
+      .mermaid-wrap { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <h1>GlowRush</h1>
+        <p>Student 3 · Data, API, Payment, Order &amp; Reliability Architecture</p>
+      </div>
+
+      <div class="nav-title">Diagrams</div>
+      <nav>
+        <a href="#d1">01 · Master ER</a>
+        <a href="#d2">02 · Payment Component</a>
+        <a href="#d3">03 · Payment Sequence</a>
+        <a href="#d4">04 · Payment State</a>
+        <a href="#d5">05 · Timeout &amp; Reconciliation</a>
+        <a href="#d6">06 · Duplicate Payment</a>
+        <a href="#d7">07 · Payment + Order Failure</a>
+        <a href="#d8">08 · Order Component</a>
+        <a href="#d9">09 · Order Class</a>
+        <a href="#d10">10 · Order Sequence</a>
+        <a href="#d11">11 · Order State</a>
+        <a href="#d12">12 · API Architecture</a>
+        <a href="#d13">13 · Event Architecture</a>
+        <a href="#d14">14 · Reliability / DLQ</a>
+        <a href="#d15">15 · Security</a>
+        <a href="#d16">16 · Observability</a>
+        <a href="#d17">17 · End-to-End Purchase</a>
+      </nav>
+
+      <div class="nav-title">Core invariants</div>
+      <nav>
+        <a href="#d7">Payment success is durable</a>
+        <a href="#d14">Events are retryable</a>
+        <a href="#d6">Payment is idempotent</a>
+        <a href="#d11">Order lifecycle is explicit</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <div class="eyebrow">SALESTORM · SYSCRAFTERS 2026</div>
+        <h2>Student 3 architecture — complete visual set</h2>
+        <p>
+          A presentation-ready Mermaid collection for database, API, events, payment,
+          order, reliability, security and observability. The diagrams use one consistent
+          GlowRush vocabulary and are designed to explain the critical 10,000-customer /
+          100-unit flash-sale scenario without turning each diagram into a wall of boxes.
+        </p>
+      </div>
+
+      <div class="principles">
+        <div class="pill"><strong>Database</strong><span>PostgreSQL is the durable transactional source for business records.</span></div>
+        <div class="pill"><strong>Payment</strong><span>Idempotency + unique provider references prevent duplicate payment effects.</span></div>
+        <div class="pill"><strong>Recovery</strong><span>PaymentConfirmed events survive temporary Order Service failure.</span></div>
+        <div class="pill"><strong>Order</strong><span>Explicit order states make recovery and lifecycle ownership explainable.</span></div>
+      </div>
+
+      <section class="diagram" id="d1">
+        <div class="section-head"><h3>01 · Master ER Diagram</h3><p>Shows the transactional data model and the major relationships needed by the GlowRush business workflow.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+erDiagram
+    CUSTOMER ||--o{ CART : owns
+    CUSTOMER ||--o{ ORDER : places
+    CUSTOMER ||--o{ INVENTORY_RESERVATION : creates
+    CATEGORY ||--o{ PRODUCT : contains
+    PRODUCT ||--|| INVENTORY : has
+    PRODUCT ||--o{ CART_ITEM : appears_in
+    CART ||--|{ CART_ITEM : contains
+    PRODUCT ||--o{ INVENTORY_RESERVATION : reserved_for
+    SALE ||--o{ DEAL : contains
+    PRODUCT ||--o{ DEAL : discounted_by
+    DEAL ||--o{ COUPON : enables
+    INVENTORY_RESERVATION ||--o{ ORDER : supports
+    ORDER ||--|{ ORDER_ITEM : contains
+    PRODUCT ||--o{ ORDER_ITEM : sold_as
+    ORDER ||--o| PAYMENT : has
+    ORDER ||--o| SHIPMENT : fulfilled_by
+    ORDER ||--o{ NOTIFICATION : triggers
+
+    CUSTOMER {
+        uuid customer_id PK
+        string email UK
+        string name
+        string status
+        datetime created_at
+    }
+
+    CATEGORY {
+        uuid category_id PK
+        string name
+    }
+
+    PRODUCT {
+        uuid product_id PK
+        uuid category_id FK
+        string sku UK
+        string name
+        decimal price
+        string status
+    }
+
+    INVENTORY {
+        uuid inventory_id PK
+        uuid product_id FK,UK
+        int available_quantity
+        int reserved_quantity
+        int sold_quantity
+        int version
+        datetime updated_at
+    }
+
+    INVENTORY_RESERVATION {
+        uuid reservation_id PK
+        uuid product_id FK
+        uuid customer_id FK
+        int quantity
+        string status
+        string idempotency_key UK
+        datetime expires_at
+        datetime created_at
+    }
+
+    CART {
+        uuid cart_id PK
+        uuid customer_id FK
+        string status
+        datetime updated_at
+    }
+
+    CART_ITEM {
+        uuid cart_item_id PK
+        uuid cart_id FK
+        uuid product_id FK
+        int quantity
+        decimal unit_price
+    }
+
+    SALE {
+        uuid sale_id PK
+        string name
+        datetime starts_at
+        datetime ends_at
+        string status
+    }
+
+    DEAL {
+        uuid deal_id PK
+        uuid sale_id FK
+        uuid product_id FK
+        decimal discount
+    }
+
+    COUPON {
+        uuid coupon_id PK
+        uuid deal_id FK
+        string code UK
+        decimal discount
+        datetime expires_at
+    }
+
+    ORDER {
+        uuid order_id PK
+        uuid customer_id FK
+        uuid reservation_id FK
+        uuid payment_id FK
+        string status
+        decimal total_amount
+        datetime created_at
+        datetime updated_at
+    }
+
+    ORDER_ITEM {
+        uuid order_item_id PK
+        uuid order_id FK
+        uuid product_id FK
+        int quantity
+        decimal unit_price
+    }
+
+    PAYMENT {
+        uuid payment_id PK
+        uuid order_id FK
+        string transaction_reference UK
+        string idempotency_key UK
+        decimal amount
+        string currency
+        string status
+        string provider
+        string failure_reason
+        datetime created_at
+    }
+
+    SHIPMENT {
+        uuid shipment_id PK
+        uuid order_id FK
+        string carrier
+        string tracking_number
+        string status
+    }
+
+    NOTIFICATION {
+        uuid notification_id PK
+        uuid order_id FK
+        string channel
+        string status
+        datetime sent_at
+    }
+        </div></div>
+        <div class="legend">
+          <span class="badge">PK = Primary Key</span>
+          <span class="badge">FK = Foreign Key</span>
+          <span class="badge">UK = Unique</span>
+        </div>
+      </section>
+
+      <section class="diagram" id="d2">
+        <div class="section-head"><h3>02 · Payment Component Diagram</h3><p>Separates payment orchestration, provider abstraction, persistence and asynchronous confirmation.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    Client["Customer / Checkout"] --> PC["Payment Controller"]
+    PC --> PS["Payment Service"]
+    PS --> ID["Idempotency Service"]
+    PS --> PP["Payment Provider Adapter"]
+    PP --> PG["External Payment Gateway"]
+    PS --> PR["Payment Repository"]
+    PR --> DB[("PostgreSQL")]
+    PS --> EP["Event Publisher"]
+    EP --> MQ[["RabbitMQ"]]
+    MQ --> OS["Order Service"]
+
+    subgraph PaymentDomain["Payment Domain"]
+        PC
+        PS
+        ID
+        PP
+        PR
+        EP
+    end
+
+    classDef app fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef data fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef external fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class PC,PS,ID,PP,PR,EP,OS app;
+    class DB data;
+    class PG external;
+    class MQ broker;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d3">
+        <div class="section-head"><h3>03 · Payment Sequence</h3><p>The normal payment-success path, including durable persistence and the asynchronous handoff to Order Service.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant CO as Checkout
+    participant P as Payment Service
+    participant I as Idempotency Store
+    participant G as Payment Gateway
+    participant DB as PostgreSQL
+    participant MQ as RabbitMQ
+    participant O as Order Service
+
+    C->>CO: Confirm checkout
+    CO->>P: POST /payments + idempotency key
+    P->>I: Check idempotency key
+    I-->>P: New request
+    P->>DB: Create PAYMENT = PENDING
+    P->>G: Authorize / capture
+    G-->>P: Success + transaction reference
+    P->>DB: Update PAYMENT = SUCCEEDED
+    P->>MQ: Publish PaymentConfirmed
+    MQ-->>O: Consume PaymentConfirmed
+    O->>DB: Create / confirm order
+    O-->>MQ: Ack event
+    P-->>CO: Payment result
+    CO-->>C: Checkout confirmed
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d4">
+        <div class="section-head"><h3>04 · Payment State Diagram</h3><p>Explicit payment states avoid ambiguous treatment of retries and timeouts.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+stateDiagram-v2
+    [*] --> INITIATED
+    INITIATED --> PENDING : provider call
+    PENDING --> SUCCEEDED : gateway success
+    PENDING --> FAILED : definitive failure
+    PENDING --> TIMED_OUT : no response
+    TIMED_OUT --> PENDING : safe retry
+    TIMED_OUT --> RECONCILIATION : retry limit reached
+    RECONCILIATION --> SUCCEEDED : provider confirms
+    RECONCILIATION --> FAILED : provider confirms failure
+    SUCCEEDED --> [*]
+    FAILED --> [*]
+    RECONCILIATION --> [*] : resolved
+        </div></div>
+        <div class="legend">A timeout is not treated as an automatic payment failure; the design supports safe retry and reconciliation.</div>
+      </section>
+
+      <section class="diagram" id="d5">
+        <div class="section-head"><h3>05 · Payment Timeout &amp; Reconciliation Sequence</h3><p>Shows how GlowRush avoids charging twice when a provider response is ambiguous.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Checkout
+    participant P as Payment Service
+    participant G as Payment Gateway
+    participant DB as PostgreSQL
+    participant R as Reconciliation Worker
+
+    C->>P: Charge request + idempotency key
+    P->>G: Create payment
+    G--xP: Timeout / no response
+    P->>DB: Mark payment TIMED_OUT
+    P-->>C: Payment status = pending verification
+    P->>P: Apply backoff policy
+    P->>G: Safe retry / status lookup
+    alt Provider confirms success
+        G-->>P: Success + same transaction reference
+        P->>DB: Mark payment SUCCEEDED
+    else Provider remains ambiguous
+        G--xP: No decisive response
+        P->>R: Create reconciliation case
+        R->>G: Query provider status
+        G-->>R: Final provider status
+        R->>DB: Reconcile payment
+    end
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d6">
+        <div class="section-head"><h3>06 · Duplicate Payment / Idempotency Sequence</h3><p>Repeated client requests produce one payment effect and reuse the original result.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant P as Payment Service
+    participant I as Idempotency Store
+    participant G as Payment Gateway
+    participant DB as PostgreSQL
+
+    C->>P: Payment request (key = K123)
+    P->>I: Lookup K123
+    I-->>P: Not found
+    P->>G: Create payment
+    G-->>P: Success, transaction = T900
+    P->>DB: Persist payment T900
+    P->>I: Store result for K123
+    P-->>C: Success(T900)
+
+    C->>P: Duplicate payment request (key = K123)
+    P->>I: Lookup K123
+    I-->>P: Existing result T900
+    P-->>C: Return original result
+    Note over P,G: Gateway is NOT called again
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d7">
+        <div class="section-head"><h3>07 · Payment Success + Order Service Failure</h3><p>Critical jury scenario: payment remains durable and the order is recovered asynchronously.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant P as Payment Service
+    participant G as Payment Gateway
+    participant DB as PostgreSQL
+    participant MQ as RabbitMQ
+    participant O as Order Service
+    participant R as Reconciliation
+
+    C->>P: Pay + idempotency key
+    P->>G: Authorize / capture
+    G-->>P: SUCCESS
+    P->>DB: Persist payment SUCCESS
+    P->>MQ: PaymentConfirmed(eventId=E1)
+
+    MQ--xO: Order Service unavailable
+    Note over MQ,O: Event remains retryable
+
+    MQ-->>O: Redeliver PaymentConfirmed(E1)
+    O->>DB: Idempotently create order
+    O-->>MQ: Ack E1
+    O->>MQ: OrderCreated
+    MQ-->>C: Async notification path
+
+    alt Message or state remains unresolved
+        R->>DB: Find unmatched successful payments
+        R->>O: Reconcile missing order
+        O->>DB: Create / repair order idempotently
+    end
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d8">
+        <div class="section-head"><h3>08 · Order Component Diagram</h3><p>Shows order orchestration, persistence and downstream fulfilment integrations without coupling directly to provider internals.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    P["PaymentConfirmed"] --> OC["Order Controller / Consumer"]
+    OC --> OS["Order Service"]
+    OS --> ID["Order Idempotency"]
+    OS --> OR["Order Repository"]
+    OR --> DB[("PostgreSQL")]
+    OS --> FE["Fulfilment Adapter"]
+    FE --> FS["Fulfilment Service"]
+    FS --> SH["Shipment Service"]
+    SH --> SP["External Delivery Provider"]
+    OS --> EP["Order Event Publisher"]
+    EP --> MQ[["RabbitMQ"]]
+    MQ --> N["Notification Service"]
+
+    classDef core fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef data fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef ext fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class OC,OS,ID,OR,FE,FS,SH,N,EP core;
+    class DB data;
+    class SP ext;
+    class MQ broker;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d9">
+        <div class="section-head">
+          <h3>09 · Order Class Diagram</h3>
+          <p>Order lifecycle structure with repository, idempotency and state-transition abstractions.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+classDiagram
+    class OrderController {
+        createOrder
+        getOrder
+    }
+
+    class OrderService {
+        createOrder
+        confirmOrder
+        transitionOrder
+    }
+
+    class OrderRepository {
+        save
+        findById
+    }
+
+    class OrderIdempotencyService {
+        checkKey
+        recordKey
+    }
+
+    class OrderStateMachine {
+        canTransition
+        transition
+    }
+
+    class FulfilmentPort {
+        createFulfilment
+    }
+
+    class PostgreSQLOrderRepository {
+        save
+        findById
+    }
+
+    class Order {
+        orderId
+        customerId
+        reservationId
+        paymentId
+        status
+        totalAmount
+        createdAt
+        updatedAt
+    }
+
+    class OrderItem {
+        orderItemId
+        orderId
+        productId
+        quantity
+        unitPrice
+    }
+
+    class Money {
+        amount
+        currency
+    }
+
+    OrderController --> OrderService
+    OrderService --> OrderRepository
+    OrderService --> OrderIdempotencyService
+    OrderService --> OrderStateMachine
+    OrderService --> FulfilmentPort
+    PostgreSQLOrderRepository ..|> OrderRepository
+    OrderRepository --> Order
+    Order --> OrderItem
+    Order --> Money
+        </div></div>
+        <div class="legend">The OrderService owns order business rules while repository, idempotency, state and fulfilment abstractions isolate infrastructure and workflow concerns.</div>
+      </section>
+
+      <section class="diagram" id="d10">
+        <div class="section-head"><h3>10 · Order Creation Sequence</h3><p>Consumes payment confirmation and creates an order exactly once.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant MQ as RabbitMQ
+    participant O as Order Service
+    participant I as Idempotency Store
+    participant DB as PostgreSQL
+    participant F as Fulfilment Service
+    participant N as Notification Service
+
+    MQ->>O: PaymentConfirmed(E1)
+    O->>I: Check E1
+    I-->>O: New event
+    O->>DB: Create ORDER = CONFIRMED
+    O->>I: Mark E1 processed
+    O->>MQ: OrderCreated(O1)
+    MQ-->>F: OrderCreated(O1)
+    F->>DB: Persist fulfilment state
+    F->>MQ: ShipmentRequested(O1)
+    MQ-->>N: NotificationRequested(O1)
+    N-->>MQ: Ack notification event
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d11">
+        <div class="section-head"><h3>11 · Order State Diagram</h3><p>Explicit lifecycle from creation through delivery tracking.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+stateDiagram-v2
+    [*] --> CREATED
+    CREATED --> PAYMENT_PENDING : checkout started
+    PAYMENT_PENDING --> CONFIRMED : payment confirmed
+    PAYMENT_PENDING --> CREATED : payment retry / recovery
+    PAYMENT_PENDING --> CANCELLED : definitive payment failure
+    CONFIRMED --> PROCESSING : fulfilment accepted
+    PROCESSING --> SHIPPED : carrier handoff
+    SHIPPED --> OUT_FOR_DELIVERY : last-mile dispatch
+    OUT_FOR_DELIVERY --> DELIVERED : delivery confirmed
+    CONFIRMED --> CANCELLED : permitted cancellation
+    PROCESSING --> CANCELLED : permitted cancellation
+    DELIVERED --> [*]
+    CANCELLED --> [*]
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d12">
+        <div class="section-head"><h3>12 · API Architecture</h3><p>Groups the public API surface by business capability and keeps payment/order ownership explicit.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    C["React Web Client"] --> G["API Gateway"]
+
+    G --> A["/api/v1/auth"]
+    G --> PR["/api/v1/products"]
+    G --> CA["/api/v1/cart"]
+    G --> SA["/api/v1/sales"]
+    G --> RE["/api/v1/reservations"]
+    G --> CH["/api/v1/checkout"]
+    G --> PA["/api/v1/payments"]
+    G --> OR["/api/v1/orders"]
+    G --> SH["/api/v1/shipments"]
+
+    A --> AU["Auth Service"]
+    PR --> PS["Product Service"]
+    CA --> CS["Cart Service"]
+    SA --> SS["Sale Service"]
+    RE --> IRS["Inventory & Reservation Service"]
+    CH --> COS["Checkout Service"]
+    PA --> PMS["Payment Service"]
+    OR --> OMS["Order Service"]
+    SH --> SMS["Shipment Service"]
+
+    classDef gateway fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef api fill:#f1f5f9,stroke:#94a3b8,color:#263247;
+    classDef service fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+
+    class C,G gateway;
+    class A,PR,CA,SA,RE,CH,PA,OR,SH api;
+    class AU,PS,CS,SS,IRS,COS,PMS,OMS,SMS service;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d13">
+        <div class="section-head"><h3>13 · Event-Driven Architecture</h3><p>Defines durable domain events, producers and the main asynchronous consumers.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    R["Reservation Service"] --> E1["ReservationConfirmed"]
+    P["Payment Service"] --> E2["PaymentConfirmed"]
+    O["Order Service"] --> E3["OrderCreated"]
+    O --> E4["ShipmentRequested"]
+    S["Shipment Service"] --> E5["ShipmentCreated"]
+    C["Checkout Service"] --> E6["NotificationRequested"]
+
+    E1 --> MQ[["RabbitMQ"]]
+    E2 --> MQ
+    E3 --> MQ
+    E4 --> MQ
+    E5 --> MQ
+    E6 --> MQ
+
+    MQ --> O
+    MQ --> F["Fulfilment Service"]
+    MQ --> SH["Shipment Service"]
+    MQ --> N["Notification Service"]
+    MQ --> R2["Reconciliation Worker"]
+
+    classDef producer fill:#17213a,stroke:#7c9cff,color:#edf2ff;
+    classDef event fill:#241d32,stroke:#c39cff,color:#f2e9ff;
+    classDef consumer fill:#e8f7f4,stroke:#0f766e,color:#123b37;
+    classDef broker fill:#2b2218,stroke:#f0bb63,color:#fff4df,stroke-width:1.5px;
+
+    class R,P,O,S,C producer;
+    class E1,E2,E3,E4,E5,E6 event;
+    class O,F,SH,N,R2 consumer;
+    class MQ broker;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d14">
+        <div class="section-head"><h3>14 · Reliability / Retry / DLQ Architecture</h3><p>Shows how transient failures are retried, poison messages are isolated, and unresolved financial/order mismatches are reconciled.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    P["Producer"] --> MQ[["RabbitMQ"]]
+    MQ --> C["Consumer"]
+    C --> V{"Processing succeeds?"}
+    V -- Yes --> ACK["ACK"]
+    V -- No --> R["Retry with exponential backoff"]
+    R --> MQ
+    R --> X{"Retry limit reached?"}
+    X -- No --> MQ
+    X -- Yes --> DLQ[["Dead Letter Queue"]]
+    DLQ --> RE["Recovery / Replay Worker"]
+    RE --> C
+
+    C --> CB["Circuit Breaker"]
+    CB --> EXT["External Provider"]
+    EXT --> Z{"Provider healthy?"}
+    Z -- No --> CB
+    Z -- Yes --> C
+
+    PAY["Payment / Order Data"] --> REC["Reconciliation Worker"]
+    REC --> DB[("PostgreSQL")]
+
+    classDef core fill:#17213a,stroke:#7c9cff,color:#edf2ff;
+    classDef data fill:#102c2a,stroke:#55d6be,color:#e9fffb;
+    classDef warning fill:#fff4d6,stroke:#a16207,color:#5a3a00;
+    classDef fail fill:#fde9ec,stroke:#b42318,color:#6b1b24;
+
+    class C,CB,R,RE,REC core;
+    class DB data;
+    class X,Z warning;
+    class DLQ fail;
+    class MQ broker;
+    class P,ACK,EXT,PAY core;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d15">
+        <div class="section-head"><h3>15 · Security Architecture</h3><p>Shows the security controls around public traffic, APIs, authentication, secrets and payment handling.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    U["Customer"] --> HTTPS["HTTPS / TLS"]
+    HTTPS --> WAF["WAF + DDoS / Abuse Protection"]
+    WAF --> RL["Rate Limiter"]
+    RL --> GW["API Gateway"]
+
+    GW --> JWT["JWT Authentication"]
+    JWT --> AUTHZ["Authorization / RBAC"]
+    AUTHZ --> VAL["Input Validation"]
+    VAL --> SVC["Business Services"]
+
+    SVC --> DB[("PostgreSQL")]
+    SVC --> SEC["Secrets Manager"]
+    SVC --> AUD["Audit Logging"]
+    SVC --> PAY["Payment Adapter"]
+    PAY --> PG["External Payment Gateway"]
+
+    classDef edge fill:#17213a,stroke:#7c9cff,color:#edf2ff;
+    classDef control fill:#241d32,stroke:#c39cff,color:#f2e9ff;
+    classDef data fill:#102c2a,stroke:#55d6be,color:#e9fffb;
+    classDef external fill:#2b2218,stroke:#f0bb63,color:#fff4df;
+
+    class U,HTTPS,GW,SVC edge;
+    class WAF,RL,JWT,AUTHZ,VAL,SEC,AUD control;
+    class DB data;
+    class PAY,PG external;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d16">
+        <div class="section-head"><h3>16 · Observability Architecture</h3><p>Connects metrics, logs and distributed tracing to the critical purchase path and operational alerts.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Client"] --> GW["API Gateway"]
+    GW --> CH["Checkout"]
+    CH --> P["Payment"]
+    P --> O["Order"]
+    O --> SH["Shipment"]
+
+    GW -. metrics .-> M[["Metrics"]]
+    CH -. metrics .-> M
+    P -. metrics .-> M
+    O -. metrics .-> M
+    SH -. metrics .-> M
+
+    GW -. structured logs .-> L[["Central Logs"]]
+    CH -. structured logs .-> L
+    P -. structured logs .-> L
+    O -. structured logs .-> L
+
+    GW -. traceId .-> T[["Distributed Tracing"]]
+    CH -. traceId .-> T
+    P -. traceId .-> T
+    O -. traceId .-> T
+    SH -. traceId .-> T
+
+    M --> A["Alert Rules"]
+    L --> A
+    T --> A
+    A --> N["On-call / Incident Response"]
+
+    classDef app fill:#17213a,stroke:#7c9cff,color:#edf2ff;
+    classDef obs fill:#0f2b28,stroke:#55d6be,color:#e9fffb;
+    classDef alert fill:#2b2218,stroke:#f0bb63,color:#fff4df;
+
+    class C,GW,CH,P,O,SH app;
+    class M,L,T obs;
+    class A,N alert;
+        </div></div>
+        <div class="legend">
+          Key metrics: request rate, latency, error rate, inventory reservation failures, payment failures, order conversion, queue backlog and inventory inconsistency alerts.
+        </div>
+      </section>
+
+      <section class="diagram" id="d17">
+        <div class="section-head"><h3>17 · End-to-End Purchase Flow</h3><p>The final judge-facing walkthrough from discovery through payment, order, shipment, notification and tracking.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer"] --> PD["Product Discovery"]
+    PD --> CT["Cart"]
+    CT --> GW["API Gateway"]
+    GW --> SS["StormShield"]
+    SS --> IC["Inventory Check"]
+    IC --> IR["Inventory Reservation"]
+    IR --> CK["Checkout"]
+    CK --> PA["Payment"]
+    PA --> OR["Order"]
+    OR --> FU["Fulfilment"]
+    FU --> SH["Shipment"]
+    SH --> NO["Notification"]
+    SH --> DT["Delivery Tracking"]
+
+    PA -. PaymentConfirmed .-> MQ[["RabbitMQ"]]
+    MQ -. async recovery .-> OR
+
+    IR -. reservation events .-> MQ
+    OR -. order events .-> MQ
+
+    classDef user fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef critical fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.8px;
+    classDef ops fill:#e8f7f4,stroke:#0f766e,color:#123b37;
+    classDef broker fill:#2b2218,stroke:#f0bb63,color:#fff4df,stroke-width:1.6px;
+
+    class C,PD,CT,GW user;
+    class SS,IC,IR,CK,PA,OR critical;
+    class FU,SH,NO,DT ops;
+    class MQ broker;
+        </div></div>
+        <div class="legend">
+          The customer-facing flow stays easy to follow, while RabbitMQ provides the asynchronous recovery path between payment and order processing.
+        </div>
+      </section>
+
+      <footer>
+        GlowRush · Student 3 diagram set. These diagrams are designed to align with the hackathon's required
+        database/API/event, payment/order, reliability, security/observability and sequence/state deliverables.
+        Review the shared architecture contract and Student 2 inventory contract before final integration.
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      securityLevel: "loose",
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true,
+        nodeSpacing: 36,
+        rankSpacing: 44,
+        padding: 16
+      },
+      sequence: {
+        useMaxWidth: false,
+        actorMargin: 26,
+        messageMargin: 26,
+        boxMargin: 10,
+        diagramMarginX: 20,
+        diagramMarginY: 20
+      },
+      er: {
+        useMaxWidth: false
+      },
+      themeVariables: {
+        background: "#f8fafc",
+        primaryColor: "#eef2ff",
+        primaryTextColor: "#182033",
+        primaryBorderColor: "#3d5fc4",
+        lineColor: "#64748b",
+        secondaryColor: "#e8f7f4",
+        tertiaryColor: "#f3edff",
+        edgeLabelBackground: "#ffffff",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#d7dfeb",
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+        fontSize: "14px"
+      }
+    });
+  </script>
+</body>
+</html>

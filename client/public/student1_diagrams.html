@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowRush — Student 1 Architecture Diagrams</title>
+  <meta name="description" content="Student 1 system architecture, HLD, container, deployment, StormShield, scalability and reliability Mermaid diagrams for GlowRush." />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --border: #d7dfeb;
+      --text: #182033;
+      --muted: #5f6b7a;
+      --accent: #3d5fc4;
+      --accent-2: #0f766e;
+      --warning: #a16207;
+      --danger: #b42318;
+      --purple: #7c5ac7;
+      --shadow: 0 12px 34px rgba(31,41,55,.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(61,95,196,.07), transparent 31%),
+        radial-gradient(circle at 92% 8%, rgba(15,118,110,.06), transparent 28%),
+        var(--bg);
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 292px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
+      padding: 24px 18px;
+    }
+
+    .brand {
+      padding: 4px 10px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .brand h1 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+    .brand p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .nav-title {
+      color: #667085;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: .16em;
+      margin: 18px 10px 8px;
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: #344054;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.35;
+      margin: 2px 0;
+    }
+
+    nav a:hover, nav a:focus-visible {
+      background: #edf2ff;
+      color: #182033;
+      outline: none;
+    }
+
+    main {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 34px clamp(18px, 3vw, 50px) 64px;
+    }
+
+    .hero { padding: 12px 4px 24px; }
+    .eyebrow {
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .hero h2 {
+      margin: 8px 0 12px;
+      font-size: clamp(29px, 4vw, 50px);
+      line-height: 1.05;
+      max-width: 1050px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 1050px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.72;
+    }
+
+    .hero-banner {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 11px;
+      color: #344054;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin: 20px 0 30px;
+    }
+
+    .pill {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .pill strong { display: block; font-size: 12px; margin-bottom: 4px; }
+    .pill span { color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+    section.diagram {
+      scroll-margin-top: 18px;
+      margin: 24px 0;
+      background: rgba(255,255,255,.84);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(61,95,196,.035), transparent);
+    }
+
+    .section-head h3 { margin: 0; font-size: 17px; }
+    .section-head p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 1040px;
+    }
+
+    .mermaid-wrap {
+      padding: 22px;
+      overflow-x: auto;
+      background: #f8fafc;
+    }
+
+    .mermaid {
+      min-width: 790px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #182033;
+    }
+
+    .legend {
+      padding: 12px 20px 18px;
+      color: #667085;
+      font-size: 11px;
+      border-top: 1px solid rgba(215,223,235,.9);
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: #f3f6fb;
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-right: 7px;
+      margin-top: 6px;
+    }
+
+    footer {
+      color: #667085;
+      font-size: 11px;
+      padding: 20px 4px 10px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 2px 7px;
+      }
+      .principles { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 580px) {
+      .principles { grid-template-columns: 1fr; }
+      nav { grid-template-columns: 1fr; }
+      main { padding-left: 12px; padding-right: 12px; }
+      .mermaid { min-width: 660px; }
+      .mermaid-wrap { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <h1>GlowRush</h1>
+        <p>Student 1 · System Architect · HLD, Scalability &amp; Deployment</p>
+      </div>
+
+      <div class="nav-title">Architecture</div>
+      <nav>
+        <a href="#d1">01 · System Context</a>
+        <a href="#d2">02 · HLD Architecture</a>
+        <a href="#d3">03 · Container Architecture</a>
+        <a href="#d4">04 · Deployment Architecture</a>
+        <a href="#d5">05 · Flash-Sale Traffic Control</a>
+        <a href="#d6">06 · Sync vs Async</a>
+        <a href="#d7">07 · Service Responsibility</a>
+        <a href="#d8">08 · Communication Matrix</a>
+        <a href="#d9">09 · Bottleneck Analysis</a>
+        <a href="#d10">10 · Scalability Design</a>
+        <a href="#d11">11 · StormShield Design</a>
+        <a href="#d12">12 · Failure Recovery</a>
+        <a href="#d13">13 · Security &amp; Observability</a>
+        <a href="#d14">14 · Master Architecture</a>
+      </nav>
+
+      <div class="nav-title">Jury path</div>
+      <nav>
+        <a href="#d1">Request enters system</a>
+        <a href="#d5">10,000 → 100 control</a>
+        <a href="#d3">Service boundaries</a>
+        <a href="#d12">Failure recovery</a>
+        <a href="#d10">Horizontal scaling</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <div class="eyebrow">SALESTORM · SYSCRAFTERS 2026</div>
+        <h2>Student 1 — GlowRush system architecture blueprint</h2>
+        <p>
+          A judge-facing visual set for the overall platform: system context, HLD,
+          container boundaries, deployment, StormShield admission control, communication,
+          bottlenecks, scalability and failure recovery. The diagrams are deliberately
+          separated so each one explains a single architectural decision without
+          overloading the reader.
+        </p>
+
+        <div class="hero-banner">
+          <span class="chip">10,000 concurrent buyers</span>
+          <span class="chip">100 units of flash-sale stock</span>
+          <span class="chip">~10k RPS normal</span>
+          <span class="chip">Up to ~500k RPS flash-sale reasoning</span>
+          <span class="chip">StormShield admission control</span>
+          <span class="chip">PostgreSQL + Redis + RabbitMQ</span>
+        </div>
+      </div>
+
+      <div class="principles">
+        <div class="pill"><strong>Traffic entry</strong><span>CDN/WAF → Load Balancer → API Gateway → StormShield is the controlled front door.</span></div>
+        <div class="pill"><strong>Stock authority</strong><span>Inventory &amp; Reservation Service owns stock consistency; StormShield never owns inventory.</span></div>
+        <div class="pill"><strong>Scaling</strong><span>Edge caching, horizontal service replicas, queueing, Redis and database scaling absorb the flash-sale burst.</span></div>
+        <div class="pill"><strong>Recovery</strong><span>Timeouts, retries, circuit breakers, async events, DLQ and reconciliation handle dependency failures.</span></div>
+      </div>
+
+      <section class="diagram" id="d1">
+        <div class="section-head">
+          <h3>01 · System Context Diagram</h3>
+          <p>Executive-level picture of the actors and external systems around the GlowRush platform.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer"] --> G["GlowRush\nFlash-Sale Platform"]
+
+    PG["External Payment Gateway"] --> G
+    G --> PG
+
+    G --> SP["External Shipping / Delivery Provider"]
+    SP --> G
+
+    G --> NP["External Notification Provider"]
+    NP --> G
+
+    A["Operations / Support"] --> G
+
+    classDef user fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.7px;
+    classDef system fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:2px;
+    classDef external fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.6px;
+
+    class C,A user;
+    class G system;
+    class PG,SP,NP external;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d2">
+        <div class="section-head">
+          <h3>02 · High-Level Architecture</h3>
+          <p>The main platform flow, from edge protection through controlled admission and business services to transactional infrastructure.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer"] --> CDN["CDN"]
+    CDN --> WAF["WAF / DDoS Protection"]
+    WAF --> LB["Load Balancer"]
+    LB --> GW["API Gateway"]
+    GW --> SS["StormShield\nWaiting Room + Admission"]
+
+    SS --> P["Product Service"]
+    SS --> CA["Cart Service"]
+    SS --> SA["Sale Service"]
+    SS --> IR["Inventory & Reservation Service"]
+    SS --> CH["Checkout Service"]
+    SS --> PAY["Payment Service"]
+    SS --> ORD["Order Service"]
+    SS --> FUL["Fulfilment Service"]
+    SS --> SHI["Shipment Service"]
+    SS --> NOT["Notification Service"]
+
+    P --> R[(Redis)]
+    CA --> R
+    SA --> R
+
+    IR --> DB[(PostgreSQL)]
+    CH --> DB
+    PAY --> DB
+    ORD --> DB
+
+    PAY <--> MQ[["RabbitMQ"]]
+    ORD <--> MQ
+    FUL <--> MQ
+    SHI <--> MQ
+    NOT <--> MQ
+
+    PAY --> EPG["Payment Gateway"]
+    SHI --> DSP["Delivery Provider"]
+    NOT --> NTP["Notification Provider"]
+
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef core fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef ext fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+
+    class C,CDN,WAF,LB,GW,SS edge;
+    class P,CA,SA,IR,CH,PAY,ORD,FUL,SHI,NOT core;
+    class R,DB data;
+    class MQ broker;
+    class EPG,DSP,NTP ext;
+        </div></div>
+        <div class="legend">
+          The HLD is the main Student 1 presentation diagram. Keep the critical path visually dominant and use the other diagrams for detailed defense questions.
+        </div>
+      </section>
+
+      <section class="diagram" id="d3">
+        <div class="section-head">
+          <h3>03 · Container / Service Architecture</h3>
+          <p>Defines the fixed service boundaries and groups them by responsibility rather than mixing domain and infrastructure concerns.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    subgraph EDGE["Edge & Admission"]
+        GW["API Gateway"]
+        SS["StormShield"]
+    end
+
+    subgraph DISCOVERY["Customer Experience"]
+        P["Product Service"]
+        CA["Cart Service"]
+        SA["Sale Service"]
+    end
+
+    subgraph TRANSACTION["Transaction Core"]
+        IR["Inventory & Reservation Service"]
+        CH["Checkout Service"]
+        PAY["Payment Service"]
+        ORD["Order Service"]
+    end
+
+    subgraph FULFILMENT["Fulfilment"]
+        FUL["Fulfilment Service"]
+        SHI["Shipment Service"]
+        NOT["Notification Service"]
+    end
+
+    subgraph INFRA["Shared Infrastructure"]
+        R[(Redis)]
+        DB[(PostgreSQL)]
+        MQ[["RabbitMQ"]]
+    end
+
+    GW --> SS
+    SS --> P
+    SS --> CA
+    SS --> SA
+    SS --> IR
+    SS --> CH
+    SS --> PAY
+    SS --> ORD
+    SS --> FUL
+    SS --> SHI
+    SS --> NOT
+
+    P --> R
+    CA --> R
+    SA --> R
+
+    IR --> DB
+    CH --> DB
+    PAY --> DB
+    ORD --> DB
+
+    PAY --> MQ
+    ORD --> MQ
+    FUL --> MQ
+    SHI --> MQ
+    NOT --> MQ
+
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef customer fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.4px;
+    classDef transaction fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.6px;
+    classDef fulfil fill:#eef7f5,stroke:#2f8b80,color:#123b37,stroke-width:1.5px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class GW,SS edge;
+    class P,CA,SA customer;
+    class IR,CH,PAY,ORD transaction;
+    class FUL,SHI,NOT fulfil;
+    class R,DB data;
+    class MQ broker;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d4">
+        <div class="section-head">
+          <h3>04 · Deployment Architecture</h3>
+          <p>Shows how the logical architecture maps onto a horizontally scalable deployment topology.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    I["Internet"] --> CDN["CDN"]
+    CDN --> WAF["WAF"]
+    WAF --> ALB["Load Balancer"]
+
+    ALB --> API1["API / Service Replica 1"]
+    ALB --> API2["API / Service Replica 2"]
+    ALB --> API3["API / Service Replica N"]
+
+    subgraph CLUSTER["Scalable Application Cluster"]
+        API1
+        API2
+        API3
+    end
+
+    API1 --> R[(Redis Cluster)]
+    API2 --> R
+    API3 --> R
+
+    API1 --> DBP["PostgreSQL Primary"]
+    API2 --> DBP
+    API3 --> DBP
+
+    DBP --> DBR["PostgreSQL Read Replicas"]
+
+    API1 --> MQ[["RabbitMQ Cluster"]]
+    API2 --> MQ
+    API3 --> MQ
+
+    MQ --> WRK1["Worker Replica 1"]
+    MQ --> WRK2["Worker Replica 2"]
+    MQ --> WRKN["Worker Replica N"]
+
+    API1 --> EP["Payment / Delivery / Notification Providers"]
+    API2 --> EP
+    API3 --> EP
+
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef app fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef ext fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+
+    class I,CDN,WAF,ALB edge;
+    class API1,API2,API3,WRK1,WRK2,WRKN app;
+    class R,DBP,DBR data;
+    class MQ broker;
+    class EP ext;
+        </div></div>
+        <div class="legend">
+          Horizontal replicas are stateless at the service tier; durable state lives in the shared data layer and asynchronous work is distributed through RabbitMQ.
+        </div>
+      </section>
+
+      <section class="diagram" id="d5">
+        <div class="section-head">
+          <h3>05 · Flash-Sale Traffic Control — 10,000 → 100</h3>
+          <p>Judge-facing view of how the burst is controlled without claiming that queue admission itself guarantees inventory.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    U["10,000 Concurrent Buy Requests"] --> CDN["CDN / WAF"]
+    CDN --> RL["Rate Limiting"]
+    RL --> SS["StormShield Waiting Room"]
+    SS --> Q["Controlled Admission Queue"]
+    Q --> T["Short-Lived Admission Token"]
+
+    T --> GW["API Gateway"]
+    GW --> IR["Inventory & Reservation Service"]
+    IR --> A["Atomic Inventory Condition"]
+    A --> STOCK[(Inventory in PostgreSQL)]
+
+    STOCK --> C{"Stock available?"}
+    C -- "Yes" --> R["Reservation succeeds"]
+    C -- "No" --> S["Out of Stock /\nReservation Failed"]
+
+    R --> COUNT["At most 100 successful\nunit reservations"]
+    S --> NEXT["Next eligible request\nthrough controlled admission"]
+
+    classDef demand fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef control fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.7px;
+    classDef core fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.7px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.6px;
+    classDef success fill:#ecf8f1,stroke:#21845a,color:#174b36,stroke-width:1.6px;
+    classDef fail fill:#fde9ec,stroke:#b42318,color:#6b1b24,stroke-width:1.5px;
+
+    class U demand;
+    class CDN,RL,SS,Q,T,GW control;
+    class IR,A,C,NEXT core;
+    class STOCK data;
+    class R,COUNT success;
+    class S fail;
+        </div></div>
+        <div class="legend">
+          <strong>Core explanation:</strong> queue admission controls pressure on the backend; PostgreSQL inventory consistency is still the final authority. A queue position is not a stock guarantee.
+        </div>
+      </section>
+
+      <section class="diagram" id="d6">
+        <div class="section-head">
+          <h3>06 · Synchronous vs Asynchronous Communication</h3>
+          <p>Distinguishes latency-sensitive request/response interactions from durable event-driven work and recovery.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer"] -->|REST / Sync| GW["API Gateway"]
+    GW -->|REST / Sync| SS["StormShield"]
+    SS -->|REST / Sync| IR["Inventory & Reservation"]
+    IR -->|SQL / Sync| DB[(PostgreSQL)]
+    SS -->|REST / Sync| CH["Checkout"]
+    CH -->|REST / Sync| PAY["Payment"]
+    PAY -->|Provider API / Sync| PG["Payment Gateway"]
+
+    PAY -. "PaymentConfirmed\nAsync Event" .-> MQ[["RabbitMQ"]]
+    MQ -. "Async Consumer" .-> ORD["Order Service"]
+    ORD -. "OrderCreated" .-> MQ
+    MQ -. "Async Consumer" .-> FUL["Fulfilment"]
+    MQ -. "Async Consumer" .-> SHI["Shipment"]
+    MQ -. "Async Consumer" .-> NOT["Notification"]
+
+    classDef sync fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef async fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.6px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247;
+    classDef ext fill:#fff4d6,stroke:#a16207,color:#5a3a00;
+
+    class C,GW,SS,IR,CH,PAY,ORD,FUL,SHI,NOT sync;
+    class MQ async;
+    class DB data;
+    class PG ext;
+        </div></div>
+        <div class="legend">
+          <span class="badge">Solid arrows = synchronous</span>
+          <span class="badge">Dashed arrows = asynchronous/event path</span>
+        </div>
+      </section>
+
+      <section class="diagram" id="d7">
+        <div class="section-head">
+          <h3>07 · Service Responsibility &amp; Ownership</h3>
+          <p>Makes the most important service-boundary decisions explicit for handoff to Students 2 and 3.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    subgraph OWNERSHIP["GlowRush Service Ownership"]
+        SS["StormShield\nOwns: admission control\nDoes NOT own: inventory"]
+        P["Product Service\nOwns: product discovery"]
+        CA["Cart Service\nOwns: cart state"]
+        SA["Sale Service\nOwns: sale / deal context"]
+        IR["Inventory & Reservation Service\nOwns: stock + reservation consistency"]
+        CH["Checkout Service\nOwns: checkout orchestration"]
+        PAY["Payment Service\nOwns: payment lifecycle"]
+        ORD["Order Service\nOwns: order lifecycle"]
+        FUL["Fulfilment Service\nOwns: fulfilment workflow"]
+        SHI["Shipment Service\nOwns: shipment / tracking state"]
+        NOT["Notification Service\nOwns: notification delivery"]
+    end
+
+    SS --> IR
+    P --> CA
+    CA --> CH
+    SA --> CH
+    IR --> CH
+    CH --> PAY
+    PAY -. PaymentConfirmed .-> ORD
+    ORD --> FUL
+    FUL --> SHI
+    ORD -. NotificationRequested .-> NOT
+
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef critical fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.8px;
+    classDef support fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef order fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.6px;
+
+    class SS edge;
+    class IR,PAY critical;
+    class P,CA,SA,CH,FUL,SHI,NOT support;
+    class ORD order;
+        </div></div>
+        <div class="legend">
+          <strong>Boundary rule:</strong> Inventory owns stock consistency; Payment owns payment; Order owns order state; StormShield only controls admission.
+        </div>
+      </section>
+
+      <section class="diagram" id="d8">
+        <div class="section-head">
+          <h3>08 · Communication Matrix</h3>
+          <p>A visual summary of the major service-to-service communication choices used by the architecture.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    subgraph SYNC["Synchronous — request/response"]
+        S1["API Gateway → Product Service"]
+        S2["API Gateway → Cart Service"]
+        S3["Checkout → Inventory & Reservation"]
+        S4["Checkout → Payment Service"]
+        S5["Payment Service → Payment Gateway"]
+        S6["Shipment Service → Delivery Provider"]
+    end
+
+    subgraph ASYNC["Asynchronous — events / queues"]
+        A1["Payment Service → PaymentConfirmed"]
+        A2["PaymentConfirmed → Order Service"]
+        A3["Order Service → OrderCreated"]
+        A4["OrderCreated → Fulfilment"]
+        A5["ShipmentCreated → Notification"]
+        A6["Retry / DLQ / Recovery"]
+    end
+
+    MQ[["RabbitMQ"]] --- A1
+    MQ --- A2
+    MQ --- A3
+    MQ --- A4
+    MQ --- A5
+    MQ --- A6
+
+    classDef sync fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef async fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.7px;
+
+    class S1,S2,S3,S4,S5,S6 sync;
+    class A1,A2,A3,A4,A5,A6 async;
+    class MQ broker;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d9">
+        <div class="section-head">
+          <h3>09 · Bottleneck Analysis</h3>
+          <p>Maps likely pressure points to the architectural mechanism that absorbs, protects or isolates each one.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    TRAFFIC["Flash-sale traffic burst"] --> B1["Edge / API saturation"]
+    B1 --> M1["CDN + WAF + Load Balancer"]
+
+    TRAFFIC --> B2["Admission pressure"]
+    B2 --> M2["StormShield + rate limiting + queue"]
+
+    TRAFFIC --> B3["Inventory row contention"]
+    B3 --> M3["Atomic conditional reservation\n+ short transaction boundary"]
+
+    TRAFFIC --> B4["Payment provider latency"]
+    B4 --> M4["Timeout + circuit breaker + idempotency"]
+
+    TRAFFIC --> B5["Async backlog"]
+    B5 --> M5["RabbitMQ + scalable consumers + DLQ"]
+
+    TRAFFIC --> B6["Database throughput"]
+    B6 --> M6["Indexes + connection limits + read scaling\n+ careful write boundaries"]
+
+    classDef problem fill:#fde9ec,stroke:#b42318,color:#6b1b24,stroke-width:1.5px;
+    classDef control fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef traffic fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+
+    class TRAFFIC traffic;
+    class B1,B2,B3,B4,B5,B6 problem;
+    class M1,M2,M3,M4,M5,M6 control;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d10">
+        <div class="section-head">
+          <h3>10 · Scalability Design</h3>
+          <p>Shows how the architecture changes as traffic moves from normal load toward the flash-sale target.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    LOAD["Traffic\n~10k RPS normal\nup to ~500k RPS flash-sale reasoning"] --> EDGE["CDN + WAF"]
+    EDGE --> LB["Load Balancer"]
+    LB --> REP["Horizontal Service Replicas"]
+
+    REP --> CACHE[(Redis)]
+    REP --> DB["PostgreSQL\nPrimary + read scaling"]
+    REP --> MQ[["RabbitMQ\nQueue / backlog isolation"]]
+
+    MQ --> WORK["Horizontal Worker Replicas"]
+
+    REP --> SS["StormShield\nAdmission control"]
+    SS --> IR["Inventory & Reservation"]
+    IR --> DB
+
+    C1["Scale read-heavy services"] --> REP
+    C2["Cache product / sale data"] --> CACHE
+    C3["Buffer async work"] --> MQ
+    C4["Limit hot-path pressure"] --> SS
+    C5["Protect database"] --> DB
+
+    classDef load fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.7px;
+    classDef scale fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef infra fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class LOAD,EDGE,LB,REP,SS,IR load;
+    class C1,C2,C3,C4,C5,WORK scale;
+    class CACHE,DB infra;
+    class MQ broker;
+        </div></div>
+        <div class="legend">
+          Scaling principle: scale stateless compute horizontally, cache what is read-heavy, queue what can be asynchronous, and protect the transactional inventory boundary from unbounded contention.
+        </div>
+      </section>
+
+      <section class="diagram" id="d11">
+        <div class="section-head">
+          <h3>11 · StormShield Architecture</h3>
+          <p>Detailed admission-control design for the flash-sale waiting room, including token expiry and the handoff into the reservation path.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    U["Customer"] --> GW["API Gateway"]
+    GW --> SS["StormShield"]
+    SS --> AUTH["Authenticate / Validate"]
+    AUTH --> RL["Rate Limiter"]
+    RL --> WR["Waiting Room"]
+    WR --> Q["Queue Position"]
+    Q --> AD["Admission Controller"]
+    AD --> TK["Short-Lived Admission Token"]
+    TK --> GW2["Reservation API"]
+    GW2 --> IR["Inventory & Reservation Service"]
+
+    WR --> R[(Redis)]
+    AD --> R
+    TK --> R
+
+    IR --> DB[(PostgreSQL Inventory)]
+
+    IR -->|reservation success| CONF["Reservation Result"]
+    IR -->|stock unavailable| FAIL["Reservation Failed"]
+
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.6px;
+    classDef storm fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.7px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247;
+    classDef inv fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.7px;
+    classDef fail fill:#fde9ec,stroke:#b42318,color:#6b1b24;
+
+    class U,GW,GW2 edge;
+    class SS,AUTH,RL,WR,Q,AD,TK storm;
+    class R,DB data;
+    class IR,CONF inv;
+    class FAIL fail;
+        </div></div>
+        <div class="legend">
+          <strong>Important:</strong> StormShield decides who is admitted and when; Inventory &amp; Reservation Service decides whether stock can actually be reserved.
+        </div>
+      </section>
+
+      <section class="diagram" id="d12">
+        <div class="section-head">
+          <h3>12 · Failure Recovery Architecture</h3>
+          <p>Unified fault-handling view covering external dependency failures, asynchronous retries and business reconciliation.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Request"] --> SVC["GlowRush Service"]
+    SVC --> DEP["Dependency"]
+
+    DEP --> H{"Healthy?"}
+    H -- "Yes" --> OK["Continue workflow"]
+    H -- "No / Timeout" --> TO["Timeout boundary"]
+
+    TO --> CB["Circuit Breaker"]
+    CB --> RET["Bounded retry\nexponential backoff"]
+    RET --> DEP
+
+    RET --> DLQ[["Dead Letter Queue"]]
+    DLQ --> RW["Recovery / Replay Worker"]
+
+    PAY["Payment Success"] --> PDB[(Durable Payment Record)]
+    PDB --> EVT["PaymentConfirmed"]
+    EVT --> MQ[["RabbitMQ"]]
+    MQ --> ORD["Order Service"]
+
+    ORD --> FAIL{"Order available?"}
+    FAIL -- "Yes" --> OOK["Create order idempotently"]
+    FAIL -- "No" --> HOLD["Event retained / redelivered"]
+
+    HOLD --> ORD
+
+    REC["Reconciliation Worker"] --> PDB
+    REC --> ORD
+
+    classDef core fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef control fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef danger fill:#fde9ec,stroke:#b42318,color:#6b1b24,stroke-width:1.5px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+
+    class C,SVC,DEP,OK,ORD,OOK,RW,REC core;
+    class H,TO,CB,RET,HOLD control;
+    class MQ,DLQ,EVT broker;
+    class FAIL danger;
+    class PDB data;
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d13">
+        <div class="section-head">
+          <h3>13 · Security &amp; Observability Architecture</h3>
+          <p>High-level operational controls expected around a production-grade flash-sale platform.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart TB
+    U["Customer"] --> TLS["HTTPS / TLS"]
+    TLS --> WAF["WAF / Abuse Protection"]
+    WAF --> RL["Rate Limiting"]
+    RL --> GW["API Gateway"]
+    GW --> JWT["JWT Authentication"]
+    JWT --> AUTHZ["Authorization"]
+    AUTHZ --> SVC["Business Services"]
+
+    SVC --> SEC["Secrets Management"]
+    SVC --> AUD["Audit Logs"]
+
+    SVC -. metrics .-> MET["Metrics"]
+    SVC -. structured logs .-> LOG["Central Logs"]
+    SVC -. traceId .-> TRACE["Distributed Tracing"]
+
+    MET --> ALERT["Alerts"]
+    LOG --> ALERT
+    TRACE --> ALERT
+
+    ALERT --> OPS["Operations / Incident Response"]
+
+    classDef security fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef app fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef obs fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef ops fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+
+    class U,TLS,WAF,RL,GW,JWT,AUTHZ,SEC,AUD security;
+    class SVC app;
+    class MET,LOG,TRACE obs;
+    class ALERT,OPS ops;
+        </div></div>
+        <div class="legend">
+          Recommended operational signals include request rate, latency, errors, reservation failures, payment failures, conversion and queue backlog, with tracing across checkout → payment → order.
+        </div>
+      </section>
+
+      <section class="diagram" id="d14">
+        <div class="section-head">
+          <h3>14 · Master Architecture — Final Presentation View</h3>
+          <p>The compact architecture to use as the central slide, with supporting diagrams used to answer detailed jury questions.</p>
+        </div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer"] --> CDN["CDN"]
+    CDN --> WAF["WAF"]
+    WAF --> LB["Load Balancer"]
+    LB --> GW["API Gateway"]
+    GW --> SS["StormShield"]
+
+    SS --> DISC["Product / Cart / Sale"]
+    DISC --> IR["Inventory & Reservation"]
+    IR --> CH["Checkout"]
+    CH --> PAY["Payment"]
+    PAY -. "PaymentConfirmed" .-> MQ[["RabbitMQ"]]
+    MQ -. async .-> ORD["Order"]
+    ORD --> FUL["Fulfilment"]
+    FUL --> SHI["Shipment"]
+    SHI --> NOT["Notification / Tracking"]
+
+    IR --> DB[(PostgreSQL)]
+    CH --> DB
+    PAY --> DB
+    ORD --> DB
+
+    DISC --> R[(Redis)]
+    SS --> R
+
+    PAY --> PG["Payment Gateway"]
+    SHI --> DSP["Delivery Provider"]
+    NOT --> NTP["Notification Provider"]
+
+    classDef customer fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef edge fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.7px;
+    classDef critical fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.7px;
+    classDef fulfil fill:#eef7f5,stroke:#2f8b80,color:#123b37,stroke-width:1.5px;
+    classDef data fill:#eaf0f9,stroke:#64748b,color:#263247,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.6px;
+    classDef ext fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+
+    class C customer;
+    class CDN,WAF,LB,GW,SS edge;
+    class DISC,IR,CH,PAY,ORD critical;
+    class FUL,SHI,NOT fulfil;
+    class R,DB data;
+    class MQ broker;
+    class PG,DSP,NTP ext;
+        </div></div>
+        <div class="legend">
+          <strong>Pitch flow:</strong> request enters safely → StormShield smooths the burst → Inventory makes the stock decision → payment is durable → order recovery is event-driven → fulfilment and shipment proceed asynchronously.
+        </div>
+      </section>
+
+      <footer>
+        GlowRush · Student 1 diagram set. This visual collection is based on the agreed project architecture
+        and the SALESTORM design-first requirements. Before final submission, reconcile exact service names,
+        event names and API paths with the final shared contracts in 00_SHARED/.
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      securityLevel: "loose",
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true,
+        nodeSpacing: 34,
+        rankSpacing: 42,
+        padding: 16
+      },
+      sequence: { useMaxWidth: false },
+      er: { useMaxWidth: false },
+      themeVariables: {
+        background: "#f8fafc",
+        primaryColor: "#eef2ff",
+        primaryTextColor: "#182033",
+        primaryBorderColor: "#3d5fc4",
+        lineColor: "#64748b",
+        secondaryColor: "#e8f7f4",
+        tertiaryColor: "#f3edff",
+        edgeLabelBackground: "#ffffff",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#d7dfeb",
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+        fontSize: "14px"
+      }
+    });
+  </script>
+</body>
+</html>

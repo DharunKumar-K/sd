@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlowRush — Student 2 Architecture Diagrams</title>
+  <meta name="description" content="Student 2 inventory, reservation, concurrency and LLD Mermaid diagrams for GlowRush." />
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --border: #d7dfeb;
+      --text: #182033;
+      --muted: #5f6b7a;
+      --accent: #3d5fc4;
+      --accent-2: #0f766e;
+      --warning: #a16207;
+      --danger: #b42318;
+      --shadow: 0 12px 34px rgba(31,41,55,.08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 0%, rgba(61,95,196,.07), transparent 32%),
+        radial-gradient(circle at 90% 10%, rgba(15,118,110,.06), transparent 28%),
+        var(--bg);
+    }
+
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: rgba(255,255,255,.96);
+      backdrop-filter: blur(12px);
+      padding: 24px 18px;
+    }
+
+    .brand {
+      padding: 4px 10px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .brand h1 { margin: 0; font-size: 20px; letter-spacing: .2px; }
+    .brand p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+    .nav-title {
+      color: #667085;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: .16em;
+      margin: 18px 10px 8px;
+    }
+
+    nav a {
+      display: block;
+      text-decoration: none;
+      color: #344054;
+      padding: 9px 10px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.35;
+      margin: 2px 0;
+    }
+
+    nav a:hover, nav a:focus-visible {
+      background: #edf2ff;
+      color: #182033;
+      outline: none;
+    }
+
+    main {
+      width: min(1450px, 100%);
+      margin: 0 auto;
+      padding: 34px clamp(18px, 3vw, 48px) 64px;
+    }
+
+    .hero { padding: 12px 4px 24px; }
+    .eyebrow {
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: .15em;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .hero h2 {
+      margin: 8px 0 12px;
+      font-size: clamp(29px, 4vw, 48px);
+      line-height: 1.05;
+      max-width: 1000px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 1020px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .principles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 12px;
+      margin: 20px 0 30px;
+    }
+
+    .pill {
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 13px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .pill strong { display: block; font-size: 12px; margin-bottom: 4px; }
+    .pill span { color: var(--muted); font-size: 11px; line-height: 1.4; }
+
+    section.diagram {
+      scroll-margin-top: 18px;
+      margin: 24px 0;
+      background: rgba(255,255,255,.84);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .section-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(61,95,196,.035), transparent);
+    }
+
+    .section-head h3 { margin: 0; font-size: 17px; }
+    .section-head p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      max-width: 1000px;
+    }
+
+    .mermaid-wrap {
+      padding: 22px;
+      overflow-x: auto;
+      background: #f8fafc;
+    }
+
+    .mermaid {
+      min-width: 760px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #182033;
+    }
+
+    .legend {
+      padding: 12px 20px 18px;
+      color: #667085;
+      font-size: 11px;
+      border-top: 1px solid rgba(215,223,235,.9);
+      line-height: 1.55;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--border);
+      background: #f3f6fb;
+      padding: 4px 8px;
+      border-radius: 999px;
+      margin-right: 7px;
+      margin-top: 6px;
+    }
+
+    footer {
+      color: #667085;
+      font-size: 11px;
+      padding: 20px 4px 10px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      nav {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 2px 7px;
+      }
+      .principles { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+
+    @media (max-width: 580px) {
+      .principles { grid-template-columns: 1fr; }
+      nav { grid-template-columns: 1fr; }
+      main { padding-left: 12px; padding-right: 12px; }
+      .mermaid { min-width: 650px; }
+      .mermaid-wrap { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <div class="brand">
+        <h1>GlowRush</h1>
+        <p>Student 2 · Inventory, Reservation, Concurrency &amp; LLD</p>
+      </div>
+
+      <div class="nav-title">Diagrams</div>
+      <nav>
+        <a href="#d1">01 · Inventory Component</a>
+        <a href="#d2">02 · Inventory Class</a>
+        <a href="#d3">03 · Reservation Class</a>
+        <a href="#d4">04 · Purchase / Reservation Sequence</a>
+        <a href="#d5">05 · Reservation State</a>
+        <a href="#d6">06 · Duplicate Buy / Idempotency</a>
+        <a href="#d7">07 · 10,000 → 100 Concurrency</a>
+        <a href="#d8">08 · Last-Item Race</a>
+        <a href="#d9">09 · Reservation Expiry / Release</a>
+        <a href="#d10">10 · Inventory Failure / Recovery</a>
+      </nav>
+
+      <div class="nav-title">Core guarantees</div>
+      <nav>
+        <a href="#d7">Maximum 100 reservations</a>
+        <a href="#d8">Deterministic last-item winner</a>
+        <a href="#d6">Duplicate request safety</a>
+        <a href="#d9">TTL-based release</a>
+      </nav>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <div class="eyebrow">SALESTORM · SYSCRAFTERS 2026</div>
+        <h2>Student 2 inventory &amp; concurrency architecture</h2>
+        <p>
+          A complete Mermaid visual set for the critical stock-consistency module:
+          inventory authority, reservation lifecycle, atomic concurrency, idempotency,
+          expiry/release and recovery. The diagrams are intentionally separated so each
+          one answers a single jury question clearly.
+        </p>
+      </div>
+
+      <div class="principles">
+        <div class="pill"><strong>Stock authority</strong><span>Inventory &amp; Reservation Service is the final authority for available stock.</span></div>
+        <div class="pill"><strong>Consistency point</strong><span>Atomic conditional update prevents more successful reservations than stock.</span></div>
+        <div class="pill"><strong>Idempotency</strong><span>The same request key returns the existing business result instead of creating another reservation.</span></div>
+        <div class="pill"><strong>Reservation TTL</strong><span>Five-minute backend expiry releases unpaid reservations; browser navigation is not cancellation.</span></div>
+      </div>
+
+      <section class="diagram" id="d1">
+        <div class="section-head"><h3>01 · Inventory Component Diagram</h3><p>Separates HTTP entry points, business policy, persistence, idempotency, expiry and event publication.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Customer / Eligible Buyer"] --> GW["API Gateway"]
+    GW --> IC["InventoryController"]
+    GW --> RC["ReservationController"]
+
+    IC --> IS["InventoryService"]
+    RC --> RS["ReservationService"]
+
+    IS --> IP["InventoryPolicy"]
+    RS --> RP["ReservationPolicy"]
+    RS --> ID["IdempotencyService"]
+
+    IS --> IR["InventoryRepository"]
+    RS --> RR["ReservationRepository"]
+
+    IR --> DB[("PostgreSQL")]
+    RR --> DB
+
+    EW["ReservationExpiryWorker"] --> RS
+    RS --> EP["EventPublisher"]
+    EP --> MQ[["RabbitMQ"]]
+
+    classDef core fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef data fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+    classDef edge fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.4px;
+
+    class IC,RC,IS,RS,IP,RP,ID,IR,RR,EW,EP core;
+    class DB data;
+    class MQ broker;
+    class C,GW edge;
+        </div></div>
+        <div class="legend">
+          <span class="badge">Controller = request boundary</span>
+          <span class="badge">Service = business rules</span>
+          <span class="badge">Repository = persistence abstraction</span>
+          <span class="badge">Worker = expiry processing</span>
+        </div>
+      </section>
+
+      <section class="diagram" id="d2">
+        <div class="section-head"><h3>02 · Inventory Class Diagram</h3><p>Shows the core classes and interfaces around atomic stock reservation and persistence.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+classDiagram
+    class InventoryController {
+        +reserve(productId, customerId, quantity, key) Reservation
+        +getInventory(productId) Inventory
+    }
+
+    class InventoryService {
+        -InventoryRepository repository
+        -InventoryPolicy policy
+        +reserveStock(command) bool
+        +releaseStock(reservationId) void
+        +confirmSale(reservationId) void
+    }
+
+    class InventoryRepository {
+        <<interface>>
+        +reserveAtomically(productId, quantity) bool
+        +releaseAtomically(productId, quantity) bool
+        +findByProductId(productId) Inventory
+    }
+
+    class PostgreSQLInventoryRepository {
+        +reserveAtomically(productId, quantity) bool
+        +releaseAtomically(productId, quantity) bool
+        +findByProductId(productId) Inventory
+    }
+
+    class InventoryPolicy {
+        <<interface>>
+        +validateQuantity(quantity) bool
+        +canReserve(inventory, quantity) bool
+    }
+
+    class Inventory {
+        +UUID inventoryId
+        +UUID productId
+        +int availableQuantity
+        +int reservedQuantity
+        +int soldQuantity
+        +int version
+        +datetime updatedAt
+    }
+
+    class AtomicReservation {
+        +UUID reservationId
+        +UUID productId
+        +int quantity
+        +ReservationStatus status
+    }
+
+    InventoryController --> InventoryService
+    InventoryService --> InventoryRepository
+    InventoryService --> InventoryPolicy
+    PostgreSQLInventoryRepository ..|> InventoryRepository
+    InventoryRepository --> Inventory
+    InventoryService --> AtomicReservation
+        </div></div>
+        <div class="legend">The repository abstraction keeps persistence concerns out of the domain service and allows implementation changes without changing core business rules.</div>
+      </section>
+
+      <section class="diagram" id="d3">
+        <div class="section-head"><h3>03 · Reservation Class Diagram</h3><p>Models reservation ownership, idempotency, state transitions and expiration without mixing browser behavior into backend validity.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+classDiagram
+    class ReservationController {
+        +create(command) Reservation
+        +get(reservationId) Reservation
+        +cancel(reservationId) void
+    }
+
+    class ReservationService {
+        -ReservationRepository repository
+        -InventoryService inventory
+        -IdempotencyService idempotency
+        -ReservationStateMachine stateMachine
+        +createReservation(command) Reservation
+        +confirm(reservationId) void
+        +release(reservationId, reason) void
+    }
+
+    class ReservationRepository {
+        <<interface>>
+        +save(reservation) Reservation
+        +findById(id) Reservation
+        +findByIdempotencyKey(key) Reservation
+        +findExpired(now) Reservation[]
+    }
+
+    class IdempotencyService {
+        <<interface>>
+        +getResult(key) Reservation
+        +record(key, reservationId) void
+    }
+
+    class ReservationStateMachine {
+        <<interface>>
+        +canTransition(from,to) bool
+        +transition(reservation,to) void
+    }
+
+    class ReservationExpiryWorker {
+        +runExpiredReservationJob() void
+    }
+
+    class Reservation {
+        +UUID reservationId
+        +UUID productId
+        +UUID customerId
+        +int quantity
+        +ReservationStatus status
+        +string idempotencyKey
+        +datetime expiresAt
+        +datetime createdAt
+    }
+
+    ReservationController --> ReservationService
+    ReservationService --> ReservationRepository
+    ReservationService --> IdempotencyService
+    ReservationService --> ReservationStateMachine
+    ReservationService --> InventoryService
+    ReservationExpiryWorker --> ReservationService
+    ReservationRepository --> Reservation
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d4">
+        <div class="section-head"><h3>04 · Purchase / Reservation Sequence</h3><p>Normal successful path from an admitted Buy Now request through the inventory transaction.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as Customer
+    participant S as StormShield
+    participant GW as API Gateway
+    participant R as Reservation Service
+    participant I as Inventory Service
+    participant D as PostgreSQL
+    participant MQ as RabbitMQ
+
+    U->>S: Buy Now + idempotency key
+    S-->>U: Admission token
+    U->>GW: POST /api/v1/reservations
+    GW->>R: Validate token + request
+    R->>I: Reserve 1 unit
+    I->>D: Atomic conditional UPDATE
+    alt available_quantity >= 1
+        D-->>I: affected_rows = 1
+        I-->>R: Reservation successful
+        R->>D: Persist reservation = RESERVED
+        R->>MQ: ReservationCreated
+        R-->>U: reservationId + expiresAt
+    else stock unavailable
+        D-->>I: affected_rows = 0
+        I-->>R: Reservation failed
+        R-->>U: OUT_OF_STOCK / RESERVATION_FAILED
+    end
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d5">
+        <div class="section-head"><h3>05 · Reservation State Diagram</h3><p>Canonical reservation lifecycle including payment failure and timeout release paths.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+stateDiagram-v2
+    [*] --> AVAILABLE
+    AVAILABLE --> RESERVED : reservation created
+    RESERVED --> PAYMENT_PENDING : checkout started
+    PAYMENT_PENDING --> CONFIRMED : payment confirmed
+    CONFIRMED --> SOLD : order finalized
+    PAYMENT_PENDING --> PAYMENT_FAILED : definitive failure
+    PAYMENT_FAILED --> RELEASED : inventory released
+    RESERVED --> TIMEOUT : expiresAt reached
+    TIMEOUT --> RELEASED : expiry worker
+    RELEASED --> AVAILABLE : unit returned to pool
+    SOLD --> [*]
+        </div></div>
+        <div class="legend">Canonical shared state sequence: AVAILABLE → RESERVED → PAYMENT_PENDING → CONFIRMED → SOLD, with PAYMENT_FAILED and TIMEOUT release paths.</div>
+      </section>
+
+      <section class="diagram" id="d6">
+        <div class="section-head"><h3>06 · Duplicate Buy / Idempotency Sequence</h3><p>Two identical reservation requests with the same key resolve to one reservation.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as Customer
+    participant R as Reservation Service
+    participant ID as Idempotency Store
+    participant I as Inventory Service
+    participant DB as PostgreSQL
+
+    U->>R: Buy request (key = K123)
+    R->>ID: Lookup K123
+    ID-->>R: Not found
+    R->>I: Reserve unit
+    I->>DB: Atomic stock update
+    DB-->>I: success
+    I-->>R: reservationId = R900
+    R->>DB: Persist reservation R900
+    R->>ID: Store K123 → R900
+    R-->>U: Reservation R900
+
+    U->>R: Duplicate Buy (same K123)
+    R->>ID: Lookup K123
+    ID-->>R: Existing R900
+    R-->>U: Return original reservation R900
+
+    Note over R,I: Inventory is not decremented a second time
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d7">
+        <div class="section-head"><h3>07 · 10,000 → 100 Concurrency Architecture</h3><p>The central flash-sale contention model: admission controls the request rate, while the database transaction is the final inventory consistency point.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    U["10,000 Concurrent Buyers"] --> WAF["WAF / Rate Limiting"]
+    WAF --> SS["StormShield Waiting Room"]
+    SS --> Q["Controlled Admission Queue"]
+    Q --> T["Short-Lived Admission Token"]
+    T --> R["Reservation Service"]
+    R --> I["Inventory Service"]
+    I --> DB[("PostgreSQL Inventory Row")]
+
+    DB --> C{"available_quantity >= 1?"}
+    C -- Yes --> S["Reserve +1\nmax 100 successful units"]
+    C -- No --> F["OUT_OF_STOCK /\nRESERVATION_FAILED"]
+
+    S --> E["ReservationCreated"]
+    E --> MQ[["RabbitMQ"]]
+
+    classDef edge fill:#f1f5f9,stroke:#64748b,color:#263247,stroke-width:1.4px;
+    classDef control fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.7px;
+    classDef core fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.7px;
+    classDef data fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.7px;
+    classDef fail fill:#fde9ec,stroke:#b42318,color:#6b1b24,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class U,WAF edge;
+    class SS,Q,T,R control;
+    class I,C,S core;
+    class DB data;
+    class F fail;
+    class E,MQ broker;
+        </div></div>
+        <div class="legend">
+          <strong>Important:</strong> StormShield controls admission; it does not reserve stock. The maximum successful reservations are bounded by the atomic inventory condition.
+        </div>
+      </section>
+
+      <section class="diagram" id="d8">
+        <div class="section-head"><h3>08 · Last-Item Race Condition</h3><p>Two customers contend for one remaining unit; only one transaction can satisfy the atomic condition.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant A as Customer A
+    participant B as Customer B
+    participant I as Inventory Service
+    participant DB as Inventory Row
+
+    par A and B arrive concurrently
+        A->>I: Reserve final unit
+        B->>I: Reserve final unit
+    end
+
+    I->>DB: UPDATE ... SET available = available - 1 WHERE available >= 1
+    I->>DB: UPDATE ... SET available = available - 1 WHERE available >= 1
+
+    DB-->>I: One request affected_rows = 1
+    DB-->>I: Other request affected_rows = 0
+
+    I-->>A: Winner → ReservationCreated
+    I-->>B: Loser → RESERVATION_FAILED / OUT_OF_STOCK
+
+    Note over DB: Database serialization / atomic condition makes the winner deterministic
+        </div></div>
+        <div class="legend">The losing request never creates a successful reservation after inventory reaches zero.</div>
+      </section>
+
+      <section class="diagram" id="d9">
+        <div class="section-head"><h3>09 · Reservation Expiry / Release Sequence</h3><p>Backend TTL processing releases unpaid reservations and returns units to the controlled pool.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant R as Reservation Service
+    participant DB as PostgreSQL
+    participant W as ReservationExpiryWorker
+    participant I as Inventory Service
+    participant MQ as RabbitMQ
+    participant Q as Admission Queue
+
+    C->>R: Create reservation
+    R->>DB: Save RESERVED + expiresAt
+    R-->>C: 5-minute reservation window
+
+    Note over C,DB: Browser Back / navigation does not cancel reservation
+
+    W->>DB: Find expired RESERVED reservations
+    DB-->>W: Reservation R900 expired
+    W->>R: Release R900
+    R->>I: Return reserved quantity
+    I->>DB: Atomic release update
+    R->>DB: Mark reservation RELEASED
+    R->>MQ: ReservationReleased
+    MQ-->>Q: Notify next eligible admission
+        </div></div>
+      </section>
+
+      <section class="diagram" id="d10">
+        <div class="section-head"><h3>10 · Inventory Failure / Recovery Architecture</h3><p>Shows bounded failure behavior around the transactional database and event publication path.</p></div>
+        <div class="mermaid-wrap"><div class="mermaid">
+flowchart LR
+    C["Reservation Request"] --> R["Reservation Service"]
+    R --> I["Inventory Service"]
+    I --> CB["Concurrency / Persistence Boundary"]
+    CB --> DB[("PostgreSQL")]
+
+    DB --> H{"Database available?"}
+    H -- Yes --> A["Atomic reservation transaction"]
+    H -- No --> T["Timeout / transient error"]
+    T --> B["Bounded retry with backoff"]
+    B --> DB
+
+    B --> L{"Retry limit reached?"}
+    L -- No --> DB
+    L -- Yes --> F["Graceful reservation failure"]
+    F --> C
+
+    A --> P["Reservation persisted"]
+    P --> E["Publish ReservationCreated"]
+    E --> MQ[["RabbitMQ"]]
+
+    A --> X{"Transaction succeeds?"}
+    X -- No --> ROL["Rollback / no stock change"]
+    ROL --> C
+    X -- Yes --> P
+
+    classDef core fill:#eef2ff,stroke:#3d5fc4,color:#182033,stroke-width:1.5px;
+    classDef data fill:#e8f7f4,stroke:#0f766e,color:#123b37,stroke-width:1.5px;
+    classDef warning fill:#fff4d6,stroke:#a16207,color:#5a3a00,stroke-width:1.5px;
+    classDef fail fill:#fde9ec,stroke:#b42318,color:#6b1b24,stroke-width:1.5px;
+    classDef broker fill:#f3edff,stroke:#7c5ac7,color:#35234f,stroke-width:1.5px;
+
+    class C,R,I,CB,A,B,P,X,ROL core;
+    class DB data;
+    class H,L,T warning;
+    class F fail;
+    class E,MQ broker;
+        </div></div>
+        <div class="legend">
+          The retry policy is bounded. Persistent database failure should fail the reservation cleanly rather than creating an uncertain inventory state.
+        </div>
+      </section>
+
+      <footer>
+        GlowRush · Student 2 diagram set. Before committing, reconcile terminology and interfaces
+        against Student 1's ARCHITECTURE_CONTRACT.md, SERVICE_CATALOG.md and Student 3's final
+        database/event contracts.
+      </footer>
+    </main>
+  </div>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "base",
+      securityLevel: "loose",
+      flowchart: {
+        curve: "basis",
+        htmlLabels: true,
+        nodeSpacing: 34,
+        rankSpacing: 44,
+        padding: 16
+      },
+      sequence: {
+        useMaxWidth: false,
+        actorMargin: 26,
+        messageMargin: 26,
+        boxMargin: 10,
+        diagramMarginX: 20,
+        diagramMarginY: 20
+      },
+      er: { useMaxWidth: false },
+      themeVariables: {
+        background: "#f8fafc",
+        primaryColor: "#eef2ff",
+        primaryTextColor: "#182033",
+        primaryBorderColor: "#3d5fc4",
+        lineColor: "#64748b",
+        secondaryColor: "#e8f7f4",
+        tertiaryColor: "#f3edff",
+        edgeLabelBackground: "#ffffff",
+        clusterBkg: "#f8fafc",
+        clusterBorder: "#d7dfeb",
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+        fontSize: "14px"
+      }
+    });
+  </script>
+</body>
+</html>
