@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Clock, ShieldCheck, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, Clock, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, CreditCard, Loader2, PackageCheck } from 'lucide-react';
 
 function App() {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   // Sale state for the currently selected product
-  const [saleState, setSaleState] = useState('pre_sale'); // pre_sale, queued, reserved, sold_out
+  const [saleState, setSaleState] = useState('pre_sale'); // pre_sale, queued, reserved, processing_payment, payment_success, sold_out
   const [queueId, setQueueId] = useState(null);
   const [queuePosition, setQueuePosition] = useState(0);
   const [waitTime, setWaitTime] = useState(0);
@@ -69,10 +69,19 @@ function App() {
         } catch (err) {
           console.error("Error polling status:", err);
         }
-      }, 1500); // Polling every 1.5s to match backend tick
+      }, 1500); 
     }
     return () => clearInterval(interval);
   }, [saleState, queueId]);
+
+  const handlePayment = () => {
+    setSaleState('processing_payment');
+    
+    // Simulate payment gateway processing
+    setTimeout(() => {
+      setSaleState('payment_success');
+    }, 3000);
+  };
 
   const handleBack = () => {
     setSelectedProduct(null);
@@ -206,7 +215,8 @@ function App() {
                   
                   {/* Subtle pulse background based on state */}
                   {saleState === 'queued' && <div className="absolute inset-0 bg-brand-500/5 animate-pulse-slow pointer-events-none" />}
-                  {saleState === 'reserved' && <div className="absolute inset-0 bg-emerald-500/5 animate-pulse-slow pointer-events-none" />}
+                  {['reserved', 'payment_success'].includes(saleState) && <div className="absolute inset-0 bg-emerald-500/5 animate-pulse-slow pointer-events-none" />}
+                  {saleState === 'processing_payment' && <div className="absolute inset-0 bg-blue-500/5 animate-pulse-slow pointer-events-none" />}
                   {saleState === 'sold_out' && <div className="absolute inset-0 bg-red-500/5 pointer-events-none" />}
 
                   {saleState === 'pre_sale' && (
@@ -274,8 +284,55 @@ function App() {
                         </p>
                       </div>
                       
-                      <button className="w-full py-5 text-xl font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-emerald-400 hover:from-emerald-500 hover:to-emerald-300 shadow-[0_0_30px_rgba(52,211,153,0.2)] hover:shadow-[0_0_40px_rgba(52,211,153,0.4)] transition-all duration-300">
+                      <button 
+                        onClick={handlePayment}
+                        className="w-full py-5 flex items-center justify-center gap-3 text-xl font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-emerald-400 hover:from-emerald-500 hover:to-emerald-300 shadow-[0_0_30px_rgba(52,211,153,0.2)] hover:shadow-[0_0_40px_rgba(52,211,153,0.4)] transition-all duration-300"
+                      >
+                        <CreditCard className="w-6 h-6" />
                         Proceed to Secure Checkout
+                      </button>
+                    </div>
+                  )}
+
+                  {saleState === 'processing_payment' && (
+                    <div className="flex flex-col items-center justify-center gap-6 text-center py-10 relative z-10">
+                      <Loader2 className="w-16 h-16 text-blue-400 animate-spin mb-2" />
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Processing Payment...</h3>
+                        <p className="text-slate-400">Authenticating with payment gateway. Please don't close this window.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {saleState === 'payment_success' && (
+                    <div className="flex flex-col items-center justify-center gap-6 text-center py-6 relative z-10">
+                      <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 rounded-full flex items-center justify-center mb-2 border border-emerald-500/20">
+                        <PackageCheck className="w-10 h-10 text-emerald-400" />
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-2xl font-bold text-white mb-2">Order Confirmed!</h3>
+                        <p className="text-slate-400 max-w-sm mx-auto">
+                          Your payment was successful. We're processing your order for shipping.
+                        </p>
+                      </div>
+                      
+                      <div className="bg-black/30 w-full p-4 rounded-lg border border-white/5 text-left mb-2">
+                        <p className="text-sm text-slate-400 flex justify-between mb-1">
+                          <span>Order ID:</span>
+                          <span className="font-mono text-white">ORD-{Math.floor(Math.random() * 90000) + 10000}</span>
+                        </p>
+                        <p className="text-sm text-slate-400 flex justify-between">
+                          <span>Total Paid:</span>
+                          <span className="text-white font-bold">₹{selectedProduct.price}</span>
+                        </p>
+                      </div>
+
+                      <button 
+                        onClick={handleBack}
+                        className="w-full py-4 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-all font-bold"
+                      >
+                        Return to Shop
                       </button>
                     </div>
                   )}
