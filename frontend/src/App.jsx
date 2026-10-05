@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Clock, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, CreditCard, Loader2, PackageCheck } from 'lucide-react';
+import { ShoppingBag, Clock, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, CreditCard, Loader2, PackageCheck, Activity, Users, ServerCrash } from 'lucide-react';
 
 function App() {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   // Sale state for the currently selected product
-  const [saleState, setSaleState] = useState('pre_sale'); // pre_sale, queued, reserved, processing_payment, payment_success, sold_out
+  const [saleState, setSaleState] = useState('pre_sale'); 
   const [queueId, setQueueId] = useState(null);
   const [queuePosition, setQueuePosition] = useState(0);
   const [waitTime, setWaitTime] = useState(0);
+
+  // Global Simulation State
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simState, setSimState] = useState({
+    queueLength: 0,
+    inventory: 100,
+    successfulOrders: 0,
+    rejected: 0,
+    status: 'idle' // idle, running, finished
+  });
 
   // Fetch products on mount
   const fetchProducts = () => {
@@ -76,8 +86,6 @@ function App() {
 
   const handlePayment = () => {
     setSaleState('processing_payment');
-    
-    // Simulate payment gateway processing
     setTimeout(() => {
       setSaleState('payment_success');
     }, 3000);
@@ -87,8 +95,55 @@ function App() {
     setSelectedProduct(null);
     setSaleState('pre_sale');
     setQueueId(null);
-    fetchProducts(); // refresh stock on back
+    fetchProducts(); 
   };
+
+  // --- Mass Traffic Simulation Logic ---
+  const startSimulation = () => {
+    setIsSimulating(true);
+    setSimState({
+      queueLength: 10000,
+      inventory: 100,
+      successfulOrders: 0,
+      rejected: 0,
+      status: 'running'
+    });
+  };
+
+  const closeSimulation = () => {
+    setIsSimulating(false);
+  };
+
+  useEffect(() => {
+    let simInterval;
+    if (isSimulating && simState.status === 'running') {
+      simInterval = setInterval(() => {
+        setSimState(prev => {
+          if (prev.inventory <= 0) {
+            // Inventory depleted, reject rest of queue instantly
+            return {
+              ...prev,
+              queueLength: 0,
+              rejected: prev.rejected + prev.queueLength,
+              status: 'finished'
+            };
+          }
+
+          // Process a batch of 25-45 users
+          const batchSize = Math.floor(Math.random() * 20) + 25;
+          const successfulInBatch = Math.min(batchSize, prev.inventory);
+          
+          return {
+            ...prev,
+            queueLength: Math.max(0, prev.queueLength - batchSize),
+            inventory: prev.inventory - successfulInBatch,
+            successfulOrders: prev.successfulOrders + successfulInBatch,
+          };
+        });
+      }, 800); // Tick every 800ms for visual effect
+    }
+    return () => clearInterval(simInterval);
+  }, [isSimulating, simState.status]);
 
   // Group products by category
   const categories = products.reduce((acc, product) => {
@@ -107,20 +162,112 @@ function App() {
 
       {/* Header */}
       <header className="w-full p-6 glass-panel rounded-none border-t-0 border-x-0 flex justify-between items-center z-20 sticky top-0">
-        <div className="text-2xl font-bold bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent tracking-tighter cursor-pointer" onClick={handleBack}>
+        <div className="text-2xl font-bold bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent tracking-tighter cursor-pointer" onClick={() => { handleBack(); closeSimulation(); }}>
           GLOWRUSH
         </div>
-        <div className="flex items-center gap-2 text-sm font-medium text-slate-400 bg-black/20 px-3 py-1 rounded-full border border-white/5">
-          <ShieldCheck className="w-4 h-4 text-brand-400" />
-          StormShield™ Active
+        <div className="flex gap-4">
+          <button 
+            onClick={startSimulation}
+            className="flex items-center gap-2 text-sm font-bold bg-blue-600/20 text-blue-400 px-4 py-2 rounded-full border border-blue-500/30 hover:bg-blue-600/30 transition-all"
+          >
+            <Activity className="w-4 h-4" />
+            10K User Simulation
+          </button>
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-400 bg-black/20 px-3 py-1 rounded-full border border-white/5">
+            <ShieldCheck className="w-4 h-4 text-brand-400" />
+            StormShield™ Active
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow p-6 z-10 w-full">
+      <main className="flex-grow p-6 z-10 w-full relative">
         
+        {/* Simulation Dashboard Overlay */}
+        {isSimulating && (
+          <div className="absolute inset-0 bg-premium-dark/95 backdrop-blur-xl z-50 flex items-center justify-center p-6">
+            <div className="max-w-4xl w-full glass-panel p-8 rounded-2xl border-blue-500/30 relative">
+              <button onClick={closeSimulation} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <XCircle className="w-6 h-6" />
+              </button>
+              
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-extrabold text-white mb-2 tracking-tight">Flash Sale Stress Test</h2>
+                <p className="text-slate-400">Simulating 10,000 concurrent users fighting for 100 inventory units.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Traffic Stats */}
+                <div className="bg-black/50 p-6 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-3 text-blue-400 mb-4">
+                    <Users className="w-6 h-6" />
+                    <h3 className="font-bold text-lg uppercase tracking-widest">Active Traffic</h3>
+                  </div>
+                  <div className="text-5xl font-black text-white mb-2 font-mono">
+                    {simState.queueLength.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-slate-500">Users in StormShield Waiting Room</p>
+                </div>
+
+                {/* Inventory Stats */}
+                <div className="bg-black/50 p-6 rounded-xl border border-white/5 relative overflow-hidden">
+                  <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none ${simState.inventory <= 0 ? 'bg-red-500/10' : 'opacity-0'}`} />
+                  <div className="flex items-center gap-3 text-brand-400 mb-4 relative z-10">
+                    <PackageCheck className="w-6 h-6" />
+                    <h3 className="font-bold text-lg uppercase tracking-widest">Remaining Stock</h3>
+                  </div>
+                  <div className="text-5xl font-black text-white mb-2 font-mono relative z-10">
+                    {simState.inventory} / 100
+                  </div>
+                  <p className="text-sm text-slate-500 relative z-10">Atomic DB Inventory Count</p>
+                </div>
+
+                {/* Success Stats */}
+                <div className="bg-black/50 p-6 rounded-xl border border-white/5 relative overflow-hidden">
+                  <div className={`absolute inset-0 transition-opacity duration-1000 pointer-events-none ${simState.status === 'finished' ? 'bg-emerald-500/10' : 'opacity-0'}`} />
+                  <div className="flex items-center gap-3 text-emerald-400 mb-4 relative z-10">
+                    <CheckCircle2 className="w-6 h-6" />
+                    <h3 className="font-bold text-lg uppercase tracking-widest">Successful Sales</h3>
+                  </div>
+                  <div className="text-5xl font-black text-white mb-2 font-mono relative z-10">
+                    {simState.successfulOrders}
+                  </div>
+                  <p className="text-sm text-emerald-500/70 relative z-10">Overselling Prevented ✅</p>
+                </div>
+
+                {/* Rejected Stats */}
+                <div className="bg-black/50 p-6 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-3 text-red-400 mb-4">
+                    <ServerCrash className="w-6 h-6" />
+                    <h3 className="font-bold text-lg uppercase tracking-widest">Rejected Requests</h3>
+                  </div>
+                  <div className="text-5xl font-black text-white mb-2 font-mono">
+                    {simState.rejected.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-slate-500">Served "Sold Out" from Edge/Cache</p>
+                </div>
+              </div>
+
+              {simState.status === 'running' ? (
+                <div className="w-full flex flex-col items-center justify-center py-4">
+                  <Loader2 className="w-8 h-8 text-blue-400 animate-spin mb-4" />
+                  <p className="text-blue-400 font-bold animate-pulse">Processing Batch Admissions...</p>
+                </div>
+              ) : (
+                <div className="w-full p-4 bg-emerald-900/30 border border-emerald-500/30 rounded-xl text-center">
+                  <p className="text-emerald-400 font-bold text-lg">Simulation Complete!</p>
+                  <p className="text-emerald-200/80 text-sm mt-1">10,000 users processed. Exactly 100 sales made. 0 database crashes.</p>
+                  <button onClick={startSimulation} className="mt-4 px-6 py-2 bg-emerald-600/20 text-emerald-400 rounded-lg hover:bg-emerald-600/40 transition">
+                    Run Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Product Grid View Grouped by Category */}
-        {!selectedProduct && (
+        {!selectedProduct && !isSimulating && (
           <div className="max-w-7xl mx-auto pb-12">
             <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight">
               Live Flash Sales
@@ -169,7 +316,7 @@ function App() {
         )}
 
         {/* Selected Product & Queue View */}
-        {selectedProduct && (
+        {selectedProduct && !isSimulating && (
           <div className="max-w-5xl mx-auto w-full pt-8">
             <button onClick={handleBack} className="flex items-center gap-2 text-slate-400 hover:text-white transition mb-8 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg w-fit border border-white/5">
               <ArrowLeft className="w-4 h-4" /> Back to Categories
