@@ -62,7 +62,7 @@ Everything inside the "GlowRush Platform" box:
 - Inventory & Reservation Service
 - Checkout Service, Payment Service, Order Service
 - Fulfilment Service, Shipment Service, Notification Service
-- PostgreSQL database cluster
+- MongoDB database cluster
 - Redis cluster
 - RabbitMQ cluster
 

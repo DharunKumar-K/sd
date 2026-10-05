@@ -204,7 +204,7 @@ erDiagram
         TIMESTAMPTZ created_at
     }
 
-    %% ────────────────────────── IDEMPOTENCY TABLE ──────────────────────────
+    %% ────────────────────────── IDEMPOTENCY COLLECTION ──────────────────────────
     processed_events {
         UUID        event_id      PK
         VARCHAR     event_type
@@ -250,23 +250,23 @@ erDiagram
 
 | Entity | Owning Service | Storage | Consistency Model |
 |--------|---------------|---------|-------------------|
-| `customers` | Auth Service (API Gateway) | PostgreSQL | **Strong — ACID** |
-| `categories` | Product Service | PostgreSQL + Redis cache | Strong |
-| `products` | Product Service | PostgreSQL + Redis cache (5 min TTL) | Strong write, Eventually consistent read |
-| `inventory` | **Inventory & Reservation Service** | PostgreSQL | **Strongly consistent — atomic conditional UPDATE** |
-| `inventory_reservation` | **Inventory & Reservation Service** | PostgreSQL | **Strongly consistent — idempotency key UNIQUE** |
-| `carts` | Cart Service | Redis (hot) + PostgreSQL (persist) | **Eventually consistent** |
-| `cart_items` | Cart Service | Redis (hot) + PostgreSQL (persist) | **Eventually consistent** |
-| `sales` | Sale Service | PostgreSQL + Redis cache | Strong write, Eventually consistent read |
-| `deals` | Sale Service | PostgreSQL + Redis cache | Strong write, Eventually consistent read |
-| `coupons` | Sale Service | PostgreSQL | **Strong** |
-| `payments` | **Payment Service** | PostgreSQL | **Strongly consistent — dual UNIQUE constraint** |
-| `orders` | **Order Service** | PostgreSQL | **Strongly consistent** |
-| `order_items` | **Order Service** | PostgreSQL | **Strongly consistent** |
-| `fulfilments` | Fulfilment Service | PostgreSQL | **Eventually consistent** |
-| `shipments` | Shipment Service | PostgreSQL | **Eventually consistent** |
-| `notifications` | Notification Service | PostgreSQL | **Eventually consistent** |
-| `processed_events` | Every service (own copy) | PostgreSQL | **Strong — idempotency fence** |
+| `customers` | Auth Service (API Gateway) | MongoDB | **Strong — ACID** |
+| `categories` | Product Service | MongoDB + Redis cache | Strong |
+| `products` | Product Service | MongoDB + Redis cache (5 min TTL) | Strong write, Eventually consistent read |
+| `inventory` | **Inventory & Reservation Service** | MongoDB | **Strongly consistent — atomic conditional UPDATE** |
+| `inventory_reservation` | **Inventory & Reservation Service** | MongoDB | **Strongly consistent — idempotency key UNIQUE** |
+| `carts` | Cart Service | Redis (hot) + MongoDB (persist) | **Eventually consistent** |
+| `cart_items` | Cart Service | Redis (hot) + MongoDB (persist) | **Eventually consistent** |
+| `sales` | Sale Service | MongoDB + Redis cache | Strong write, Eventually consistent read |
+| `deals` | Sale Service | MongoDB + Redis cache | Strong write, Eventually consistent read |
+| `coupons` | Sale Service | MongoDB | **Strong** |
+| `payments` | **Payment Service** | MongoDB | **Strongly consistent — dual UNIQUE constraint** |
+| `orders` | **Order Service** | MongoDB | **Strongly consistent** |
+| `order_items` | **Order Service** | MongoDB | **Strongly consistent** |
+| `fulfilments` | Fulfilment Service | MongoDB | **Eventually consistent** |
+| `shipments` | Shipment Service | MongoDB | **Eventually consistent** |
+| `notifications` | Notification Service | MongoDB | **Eventually consistent** |
+| `processed_events` | Every service (own copy) | MongoDB | **Strong — idempotency fence** |
 
 ---
 
@@ -278,29 +278,29 @@ These entities represent money, stock, and legal records. Any failure must roll 
 
 | Entity | Why Strong Consistency |
 |--------|----------------------|
-| `inventory` | Oversell prevention — atomic SQL is the single consistency point |
+| `inventory` | Oversell prevention — atomic MongoDB is the single consistency point |
 | `inventory_reservation` | Guarantees one-reservation-per-idempotency-key |
 | `payments` | Financial record — duplicate gateway charges are catastrophic |
 | `orders` | Business contract with customer |
 | `order_items` | Legal record of what was sold |
 | `coupons.used_count` | Prevents coupon abuse |
 
-### Eventually Consistent (Acceptable Lag)
+### Eventually Consistent (Accepcollection Lag)
 
 | Entity | Why Eventual Consistency OK |
 |--------|---------------------------|
-| `carts` | Shopping cart state is reconstructible; brief staleness acceptable |
+| `carts` | Shopping cart state is reconstructible; brief staleness accepcollection |
 | `notifications` | Best-effort delivery; user accepts retries |
 | `fulfilments` | Warehouse ops don't require real-time accuracy |
 | `shipments` | Carrier updates are inherently delayed |
-| Product/Sale Redis caches | Stale catalog data acceptable for seconds |
+| Product/Sale Redis caches | Stale catalog data accepcollection for seconds |
 
 ---
 
 ## 4. Cross-Service Access Rules
 
 > [!IMPORTANT]
-> No service reads or writes another service's database tables directly.
+> No service reads or writes another service's database collections directly.
 > All cross-service access is via REST APIs or RabbitMQ events.
 
 | Accessing Service | Target Data | Mechanism |
@@ -317,10 +317,10 @@ These entities represent money, stock, and legal records. Any failure must roll 
 
 ## 5. Audit & Concurrency Fields
 
-| Field | Tables | Purpose |
+| Field | Collections | Purpose |
 |-------|--------|---------|
-| `created_at` | All business entities | Immutable creation timestamp |
-| `updated_at` | All mutable entities | Tracks last modification (trigger-maintained) |
+| `created_at` | All business entities | Immucollection creation timestamp |
+| `updated_at` | All mucollection entities | Tracks last modification (trigger-maintained) |
 | `version` | `inventory` only | Optimistic concurrency version (incremented on every UPDATE) |
 | `idempotency_key` | `inventory_reservation`, `payments` | Prevents duplicate operations |
 | `transaction_reference` | `payments` | Gateway's unique reference; prevents double-charge |

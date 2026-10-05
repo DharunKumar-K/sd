@@ -89,7 +89,7 @@ class PayUAdapter      extends PaymentProvider { ... }  // new provider — zero
 
 ## L — Liskov Substitution Principle
 
-**Definition:** Subtypes must be substitutable for their base types without breaking correctness.
+**Definition:** Subtypes must be substitucollection for their base types without breaking correctness.
 
 ### Problem
 
@@ -100,7 +100,7 @@ If `MockPaymentAdapter` is used in tests but behaves differently from `RazorpayA
 All `PaymentProvider` adapters:
 - Return the same `PaymentResult` shape on success
 - Throw the same `PaymentGatewayError` on failure
-- Are fully substitutable in the `PaymentService` constructor
+- Are fully substitucollection in the `PaymentService` constructor
 
 ```javascript
 // PaymentService works with ANY PaymentProvider subtype
@@ -157,7 +157,7 @@ class NotificationProvider {
 
 Each service only depends on the interface it needs. Adding a `getRefundStatus()` to `PaymentProvider` does NOT affect `DeliveryProvider`.
 
-**Trade-off:** More interface files to maintain — acceptable for clarity.
+**Trade-off:** More interface files to maintain — accepcollection for clarity.
 
 ---
 
@@ -190,9 +190,9 @@ class PaymentService {
 // COMPOSITION ROOT — only here does concrete implementation appear
 const paymentService = new PaymentService(
   PaymentProviderFactory.create(process.env.PAYMENT_PROVIDER),
-  new PostgresPaymentRepository(db),
+  new mongodbPaymentRepository(db),
   new RabbitMQEventPublisher(channel),
-  new PostgresIdempotencyStore(db),
+  new mongodbIdempotencyStore(db),
 );
 ```
 
@@ -200,7 +200,7 @@ const paymentService = new PaymentService(
 
 ---
 
-## SOLID Summary Table
+## SOLID Summary Collection
 
 | Principle | Class/Component | Problem Solved | Flash Sale Impact |
 |-----------|----------------|---------------|-------------------|

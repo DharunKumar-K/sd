@@ -38,11 +38,11 @@
 
 | Constraint | Status |
 |-----------|--------|
-| Technology stack unchanged (PostgreSQL, Redis, RabbitMQ, Node.js, Express.js) | ✅ |
+| Technology stack unchanged (MongoDB, Redis, RabbitMQ, Node.js, Express.js) | ✅ |
 | Service names match SERVICE_CATALOG.md exactly | ✅ |
-| `inventory` and `inventory_reservation` table schemas match ARCHITECTURE_CONTRACT.md §8 | ✅ |
+| `inventory` and `inventory_reservation` collection schemas match ARCHITECTURE_CONTRACT.md §8 | ✅ |
 | Reservation states match ARCHITECTURE_CONTRACT.md §9 and DOMAIN_STATES.md §1 | ✅ |
-| Canonical atomic SQL used exactly as specified in ARCHITECTURE_CONTRACT.md §7 | ✅ |
+| Canonical atomic MongoDB used exactly as specified in ARCHITECTURE_CONTRACT.md §7 | ✅ |
 | Reservation TTL = exactly 5 minutes | ✅ |
 | StormShield boundaries not violated (no admission logic in Inventory Service) | ✅ |
 | No new databases introduced | ✅ |
@@ -57,15 +57,15 @@
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| Concurrency mechanism | Atomic conditional SQL (`WHERE available_quantity >= qty`) | Fastest, simplest, no retry storms, PostgreSQL-native correctness guarantee |
-| Idempotency | `X-Idempotency-Key` header + `processed_events` table | Standard REST idempotency pattern; survives network retries |
-| Reservation TTL enforcement | Cron worker every 30s (database scan) | Simple, reliable, fits PostgreSQL-primary architecture; no extra infrastructure |
+| Concurrency mechanism | Atomic conditional MongoDB (`WHERE available_quantity >= qty`) | Fastest, simplest, no retry storms, MongoDB-native correctness guarantee |
+| Idempotency | `X-Idempotency-Key` header + `processed_events` collection | Standard REST idempotency pattern; survives network retries |
+| Reservation TTL enforcement | Cron worker every 30s (database scan) | Simple, reliable, fits MongoDB-primary architecture; no extra infrastructure |
 | Event publishing timing | Post-commit only | Prevents event consumers from acting on rolled-back reservations |
-| Cache strategy | Redis for reads, invalidated on every write | Reduces DB load for availability checks during flash sale; writes always go to PostgreSQL |
+| Cache strategy | Redis for reads, invalidated on every write | Reduces DB load for availability checks during flash sale; writes always go to MongoDB |
 | Service as authority | Inventory Service owns ALL stock writes | No other service can modify `available_quantity` or `reserved_quantity` |
 
 ---
 
 ## The Single Most Important Statement
 
-> **The `WHERE available_quantity >= quantity` clause in the atomic SQL update is the mathematical guarantee that prevents overselling. It is evaluated by PostgreSQL after acquiring an exclusive row lock, against the committed value of `available_quantity` — not the value seen at the start of a transaction. No application-level check, no Redis lock, no optimistic version guard is needed or used. The database is the final arbiter of stock truth.**
+> **The `WHERE available_quantity >= quantity` clause in the atomic MongoDB update is the mathematical guarantee that prevents overselling. It is evaluated by MongoDB after acquiring an exclusive row lock, against the committed value of `available_quantity` — not the value seen at the start of a transaction. No application-level check, no Redis lock, no optimistic version guard is needed or used. The database is the final arbiter of stock truth.**

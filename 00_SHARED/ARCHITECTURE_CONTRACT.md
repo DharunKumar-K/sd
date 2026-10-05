@@ -20,7 +20,7 @@ This document freezes all cross-cutting architectural decisions. **No student ma
 | ------------------ | ---------------------------- | ---------------------------------------- |
 | Frontend           | React + Vite + Tailwind CSS  | SPA served from CDN                      |
 | Backend Runtime    | Node.js + Express.js         | All microservices                        |
-| Primary Database   | PostgreSQL                   | Single source of truth for all business data |
+| Primary Database   | MongoDB                   | Single source of truth for all business data |
 | Cache              | Redis                        | Caching, rate limiting, admission tokens |
 | Message Broker     | RabbitMQ                     | All async event communication            |
 | API Style          | REST + OpenAPI 3.0           | Synchronous service-to-service           |
@@ -176,7 +176,7 @@ WHERE product_id = :product_id
 
 ## 8. Canonical Data Models — FROZEN
 
-### 8.1 Inventory Table
+### 8.1 Inventory Collection
 
 | Column             | Type        | Notes                          |
 | ------------------ | ----------- | ------------------------------ |
@@ -190,7 +190,7 @@ WHERE product_id = :product_id
 
 **Invariant:** `available_quantity + reserved_quantity + sold_quantity = total_initial_stock`
 
-### 8.2 Inventory Reservation Table
+### 8.2 Inventory Reservation Collection
 
 | Column             | Type        | Notes                                  |
 | ------------------ | ----------- | -------------------------------------- |
@@ -284,20 +284,20 @@ Every request receives a `X-Correlation-ID` (UUID v4) at the API Gateway. This I
 
 | Service                         | Owns                                      | Database        |
 | ------------------------------- | ----------------------------------------- | --------------- |
-| Product Service                 | Product catalog, images, descriptions     | PostgreSQL      |
-| Cart Service                    | Shopping cart state                        | Redis + PostgreSQL |
-| Sale Service                    | Flash sale config, schedules, pricing     | PostgreSQL      |
-| Inventory & Reservation Service | Stock levels, reservations                | PostgreSQL      |
+| Product Service                 | Product catalog, images, descriptions     | MongoDB      |
+| Cart Service                    | Shopping cart state                        | Redis + MongoDB |
+| Sale Service                    | Flash sale config, schedules, pricing     | MongoDB      |
+| Inventory & Reservation Service | Stock levels, reservations                | MongoDB      |
 | Checkout Service                | Checkout session state                    | Redis           |
-| Payment Service                 | Payment records, gateway interactions     | PostgreSQL      |
-| Order Service                   | Orders, order items, order lifecycle      | PostgreSQL      |
-| Fulfilment Service              | Fulfilment records, packing state         | PostgreSQL      |
-| Shipment Service                | Shipment tracking, carrier integration    | PostgreSQL      |
-| Notification Service            | Notification logs, templates              | PostgreSQL      |
+| Payment Service                 | Payment records, gateway interactions     | MongoDB      |
+| Order Service                   | Orders, order items, order lifecycle      | MongoDB      |
+| Fulfilment Service              | Fulfilment records, packing state         | MongoDB      |
+| Shipment Service                | Shipment tracking, carrier integration    | MongoDB      |
+| Notification Service            | Notification logs, templates              | MongoDB      |
 | StormShield                     | Queue positions, admission tokens         | Redis           |
 
 > [!IMPORTANT]
-> Each service owns its data exclusively. No service reads another service's database tables directly. All cross-service data access is via REST APIs or RabbitMQ events.
+> Each service owns its data exclusively. No service reads another service's database collections directly. All cross-service data access is via REST APIs or RabbitMQ events.
 
 ---
 

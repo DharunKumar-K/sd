@@ -19,7 +19,7 @@ This simulation proves mathematically and empirically that:
 
 ## Part A: Node.js Concurrency Simulation
 
-This script simulates the atomic update behavior using PostgreSQL directly. Run against a test database.
+This script simulates the atomic update behavior using MongoDB directly. Run against a test database.
 
 ```javascript
 // File: simulation/concurrency-simulation.js
@@ -31,7 +31,7 @@ const pool = new Pool({
   host: process.env.PG_HOST || 'localhost',
   port: 5432,
   database: 'glowrush_test',
-  user: 'postgres',
+  user: 'mongodb',
   password: process.env.PG_PASSWORD || 'password',
   max: 50, // Connection pool size
 });
@@ -44,7 +44,7 @@ const PRODUCT_ID = 'test-product-vitamin-c-serum';
 
 async function setupTestInventory() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS inventory (
+    CREATE COLLECTION IF NOT EXISTS inventory (
       inventory_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       product_id        VARCHAR(100) UNIQUE NOT NULL,
       available_quantity INTEGER NOT NULL DEFAULT 0,
@@ -180,7 +180,7 @@ async function testIdempotency() {
   await setupTestInventory();
 
   let reservationCreated = false;
-  let idempotencyStore = new Map(); // Simulates processed_events table
+  let idempotencyStore = new Map(); // Simulates processed_events collection
 
   async function idempotentReserve(idempotencyKey, customerId) {
     // Check idempotency
@@ -521,7 +521,7 @@ Assertions:
 | Metric | Expected Value | Significance |
 |--------|---------------|-------------|
 | Reservation success rate | 100/120 admitted ≈ 83% | StormShield over-admits 20% |
-| Reservation endpoint p50 | < 50ms | Atomic SQL is fast |
+| Reservation endpoint p50 | < 50ms | Atomic MongoDB is fast |
 | Reservation endpoint p99 | < 500ms | High contention tail |
 | Availability endpoint p50 | < 10ms | Redis cache hit |
 | Out-of-stock response time | < 20ms | Immediate reject |

@@ -18,7 +18,7 @@ All 16 requested deliverables have been created and placed in their respective d
 
 ### `04_Database/`
 - **`01_MASTER_ER_DIAGRAM.md`**: The unified Entity Relationship Diagram covering all 15 required entities across the entire system.
-- **`02_DATABASE_SCHEMA.md`**: Complete PostgreSQL schema specifications including all required unique constraints, indexes, and frozen inventory models from Student 2. Contains transaction boundaries and audit fields.
+- **`02_DATABASE_SCHEMA.md`**: Complete MongoDB schema specifications including all required unique constraints, indexes, and frozen inventory models from Student 2. Contains transaction boundaries and audit fields.
 
 ### `05_API/`
 - **`01_API_SPECIFICATION.md`**: The master API specification for the `/api/v1` routes with request/response payloads, authentication, and HTTP status codes.

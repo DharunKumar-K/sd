@@ -147,7 +147,7 @@ GlowRush is a skincare e-commerce platform that conducts **flash sales**. The de
 | Failure Scenario                          | Expected Frequency | Recovery Mechanism                       |
 | ----------------------------------------- | ------------------- | ---------------------------------------- |
 | Single service instance crash             | Weekly              | Auto-restart, health check, load balancer removes |
-| PostgreSQL primary failover               | Monthly             | Automatic failover to standby            |
+| MongoDB primary failover               | Monthly             | Automatic failover to standby            |
 | Redis eviction / restart                  | Monthly             | Rebuild from DB; admission tokens re-issued |
 | RabbitMQ connection drop                  | Weekly              | Auto-reconnect with backoff              |
 | Payment gateway timeout                   | Per-transaction 1%  | Retry with idempotency key               |
@@ -164,7 +164,7 @@ GlowRush is a skincare e-commerce platform that conducts **flash sales**. The de
 | --------------------------------------------------------- | ---------------------------------------- |
 | Technology stack is fixed (see Architecture Contract)     | Hackathon requirement                    |
 | Service names are fixed (12 canonical services)           | Team agreement                           |
-| PostgreSQL is the single source of truth                  | Consistency > availability for inventory |
+| MongoDB is the single source of truth                  | Consistency > availability for inventory |
 | No eventual consistency for inventory counts              | Business-critical; must be strict        |
 | At-most-once semantics for inventory reservation          | Prevent overselling                      |
 | At-least-once semantics for notifications                 | Delivery guarantee > deduplication       |
@@ -181,6 +181,6 @@ GlowRush is a skincare e-commerce platform that conducts **flash sales**. The de
 | Real-time chat support                  | Not required for flash sale scenario         |
 | Product reviews and ratings             | Not flash-sale critical                      |
 | Wishlists                               | Not flash-sale critical                      |
-| Advanced search (Elasticsearch)         | PostgreSQL full-text search is sufficient    |
+| Advanced search (Elasticsearch)         | MongoDB full-text search is sufficient    |
 | A/B testing infrastructure              | Post-MVP                                     |
 | Mobile native apps                      | React SPA is responsive                      |

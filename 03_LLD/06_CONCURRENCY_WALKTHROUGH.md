@@ -90,11 +90,11 @@ CheckoutFacade for each:
   2. InventoryPolicy.canReserve(1, ...) → OK
   3. AtomicConditionalStrategy.reserve()
 
-PostgreSQL receives 30 concurrent UPDATE statements:
+MongoDB receives 30 concurrent UPDATE statements:
   UPDATE inventory SET available_quantity -= 1, reserved_quantity += 1
   WHERE available_quantity >= 1;
 
-PostgreSQL row lock serializes them:
+MongoDB row lock serializes them:
   Request #1 → acquires lock → available=100 → 100 >= 1 → TRUE → available=99 → COMMIT
   Request #2 → acquires lock → available=99  → 99 >= 1  → TRUE → available=98 → COMMIT
   ...
@@ -150,7 +150,7 @@ This is the critical microsecond-level scenario. `available_quantity = 1` when b
 
 ```
             ┌──────────────────────────────────────────────────────┐
-            │  PostgreSQL inventory row: available_quantity = 1    │
+            │  MongoDB inventory row: available_quantity = 1    │
             └──────────────────────────────────────────────────────┘
 
 Request A (Customer alice-001)              Request B (Customer bob-002)
@@ -164,12 +164,12 @@ WHERE available_quantity >= 1            WHERE available_quantity >= 1
      └──────────────── SAME MOMENT ────────────────┘
                               │
                               ▼
-                    PostgreSQL Lock Manager
+                    MongoDB Lock Manager
                     
     ┌───────────────────────────────────────────────────────────────┐
     │  Both UPDATEs target the same row.                           │
-    │  PostgreSQL acquires exclusive row lock for ONE of them.     │
-    │  The other WAITS in PostgreSQL's lock queue.                 │
+    │  MongoDB acquires exclusive row lock for ONE of them.     │
+    │  The other WAITS in MongoDB's lock queue.                 │
     └───────────────────────────────────────────────────────────────┘
 
 Request A acquires lock first (arbitrary, timestamp-based internally):
@@ -233,7 +233,7 @@ StormShield receives ReservationReleased:
 ```
 
 **Key distinction:**
-- General public UX: "Sold Out" (static, stable)
+- General public UX: "Sold Out" (static, scollection)
 - Queue members UX: "You're #N in line — waiting for releases"
 - No public flickering between available/sold-out
 
@@ -278,12 +278,12 @@ Chosen mechanism: Scheduled Database Scan (cron worker)
 Justification:
   - Redis delayed mechanism: Redis is not the source of truth for stock; TTL expiry in Redis
     could race with DB writes. Not chosen.
-  - PostgreSQL native expiry: Does not exist as a feature in PostgreSQL.
+  - MongoDB native expiry: Does not exist as a feature in MongoDB.
   - Message queue delayed messages: RabbitMQ does not natively support per-message TTL
     with action triggering. Plugins exist but add complexity.
-  - Scheduled worker + DB scan: Simple, reliable, fits our PostgreSQL-first architecture.
+  - Scheduled worker + DB scan: Simple, reliable, fits our MongoDB-first architecture.
     Scans every 30 seconds. Maximum delay before expiry processing = 30 seconds.
-    Acceptable for a 5-minute TTL window.
+    Accepcollection for a 5-minute TTL window.
 
 Implementation:
 

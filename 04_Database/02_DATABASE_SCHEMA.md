@@ -2,7 +2,7 @@
 
 > **Owner:** Student 3
 > **Version:** 1.0 | **Status:** FINAL
-> **DB Engine:** PostgreSQL 15+
+> **DB Engine:** MongoDB 6.0+
 
 ---
 
@@ -81,7 +81,7 @@ CREATE TYPE customer_role AS ENUM ('CUSTOMER', 'ADMIN');
 ## 2. CUSTOMER
 
 ```sql
-CREATE TABLE customers (
+CREATE COLLECTION customers (
     customer_id    UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name     VARCHAR(100) NOT NULL,
     last_name      VARCHAR(100) NOT NULL,
@@ -110,7 +110,7 @@ CREATE INDEX idx_customers_email ON customers(email);
 ## 3. CATEGORY
 
 ```sql
-CREATE TABLE categories (
+CREATE COLLECTION categories (
     category_id  UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     name         VARCHAR(100) NOT NULL,
     slug         VARCHAR(100) NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE categories (
 ## 4. PRODUCT
 
 ```sql
-CREATE TABLE products (
+CREATE COLLECTION products (
     product_id   UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     category_id  UUID         NOT NULL REFERENCES categories(category_id),
     name         VARCHAR(255) NOT NULL,
@@ -158,7 +158,7 @@ CREATE INDEX idx_products_sku         ON products(sku);
 ## 5. INVENTORY  *(Schema FROZEN — Student 2)*
 
 ```sql
-CREATE TABLE inventory (
+CREATE COLLECTION inventory (
     inventory_id        UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id          UUID         NOT NULL REFERENCES products(product_id),
     available_quantity  INTEGER      NOT NULL DEFAULT 0,
@@ -199,7 +199,7 @@ WHERE product_id = :product_id
 ## 6. INVENTORY_RESERVATION  *(Schema FROZEN — Student 2)*
 
 ```sql
-CREATE TABLE inventory_reservation (
+CREATE COLLECTION inventory_reservation (
     reservation_id   UUID               PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id       UUID               NOT NULL REFERENCES products(product_id),
     customer_id      UUID               NOT NULL REFERENCES customers(customer_id),
@@ -227,7 +227,7 @@ CREATE INDEX idx_reservation_expires_at  ON inventory_reservation(expires_at)
 ## 7. CART
 
 ```sql
-CREATE TABLE carts (
+CREATE COLLECTION carts (
     cart_id      UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id  UUID        NOT NULL REFERENCES customers(customer_id),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -242,7 +242,7 @@ CREATE INDEX idx_carts_customer_id ON carts(customer_id);
 ## 8. CART_ITEM
 
 ```sql
-CREATE TABLE cart_items (
+CREATE COLLECTION cart_items (
     cart_item_id  UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     cart_id       UUID          NOT NULL REFERENCES carts(cart_id) ON DELETE CASCADE,
     product_id    UUID          NOT NULL REFERENCES products(product_id),
@@ -263,7 +263,7 @@ CREATE INDEX idx_cart_items_product_id ON cart_items(product_id);
 ## 9. SALE
 
 ```sql
-CREATE TABLE sales (
+CREATE COLLECTION sales (
     sale_id     UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     name        VARCHAR(255) NOT NULL,
     start_time  TIMESTAMPTZ  NOT NULL,
@@ -284,7 +284,7 @@ CREATE INDEX idx_sales_start_time ON sales(start_time);
 ## 10. DEAL
 
 ```sql
-CREATE TABLE deals (
+CREATE COLLECTION deals (
     deal_id         UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     sale_id         UUID          NOT NULL REFERENCES sales(sale_id),
     product_id      UUID          NOT NULL REFERENCES products(product_id),
@@ -304,7 +304,7 @@ CREATE INDEX idx_deals_product_id ON deals(product_id);
 ## 11. COUPON
 
 ```sql
-CREATE TABLE coupons (
+CREATE COLLECTION coupons (
     coupon_id         UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     code              VARCHAR(50)   NOT NULL,
     discount_type     discount_type NOT NULL,
@@ -332,7 +332,7 @@ CREATE INDEX idx_coupons_is_active  ON coupons(is_active);
 ## 12. PAYMENT  *(dual-unique-constraint idempotency design)*
 
 ```sql
-CREATE TABLE payments (
+CREATE COLLECTION payments (
     payment_id             UUID           PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id               UUID           REFERENCES orders(order_id),  -- nullable initially
     reservation_id         UUID           NOT NULL REFERENCES inventory_reservation(reservation_id),
@@ -373,7 +373,7 @@ Together they form a two-layer safety net: the `idempotency_key` stops duplicate
 ## 13. ORDER
 
 ```sql
-CREATE TABLE orders (
+CREATE COLLECTION orders (
     order_id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id       UUID         NOT NULL REFERENCES customers(customer_id),
     reservation_id    UUID         NOT NULL REFERENCES inventory_reservation(reservation_id),
@@ -402,7 +402,7 @@ CREATE INDEX idx_orders_created_at     ON orders(created_at DESC);
 ## 14. ORDER_ITEM
 
 ```sql
-CREATE TABLE order_items (
+CREATE COLLECTION order_items (
     order_item_id  UUID          PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id       UUID          NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
     product_id     UUID          NOT NULL REFERENCES products(product_id),
@@ -423,7 +423,7 @@ CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 ## 15. FULFILMENT
 
 ```sql
-CREATE TABLE fulfilments (
+CREATE COLLECTION fulfilments (
     fulfilment_id  UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id       UUID              NOT NULL REFERENCES orders(order_id),
     status         fulfilment_status NOT NULL DEFAULT 'PENDING',
@@ -442,7 +442,7 @@ CREATE INDEX idx_fulfilments_status   ON fulfilments(status);
 ## 16. SHIPMENT
 
 ```sql
-CREATE TABLE shipments (
+CREATE COLLECTION shipments (
     shipment_id        UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id           UUID            NOT NULL REFERENCES orders(order_id),
     fulfilment_id      UUID            NOT NULL REFERENCES fulfilments(fulfilment_id),
@@ -467,7 +467,7 @@ CREATE INDEX idx_shipments_status        ON shipments(status);
 ## 17. NOTIFICATION
 
 ```sql
-CREATE TABLE notifications (
+CREATE COLLECTION notifications (
     notification_id  UUID                 PRIMARY KEY DEFAULT gen_random_uuid(),
     customer_id      UUID                 NOT NULL REFERENCES customers(customer_id),
     channel          notification_channel NOT NULL,
@@ -490,7 +490,7 @@ CREATE INDEX idx_notifications_event_type  ON notifications(event_type);
 ## 18. PROCESSED_EVENTS  *(idempotency fence — each service has own copy)*
 
 ```sql
-CREATE TABLE processed_events (
+CREATE COLLECTION processed_events (
     event_id     UUID         PRIMARY KEY,
     event_type   VARCHAR(100) NOT NULL,
     result       JSONB,
@@ -498,7 +498,7 @@ CREATE TABLE processed_events (
 );
 
 -- Auto-purge events older than 24h via maintenance job
--- Prevents unbounded table growth
+-- Prevents unbounded collection growth
 CREATE INDEX idx_processed_events_processed_at ON processed_events(processed_at);
 ```
 
@@ -571,7 +571,7 @@ COMMIT;
 
 ## 20. Index Strategy Summary
 
-| Table | Index | Type | Purpose |
+| Collection | Index | Type | Purpose |
 |-------|-------|------|---------|
 | `customers` | `email` | UNIQUE B-tree | Login lookup |
 | `products` | `category_id`, `is_active` | B-tree | Browse / filter |

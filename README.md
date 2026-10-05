@@ -25,7 +25,7 @@ The system must **guarantee**:
 | ------------------ | ------------------------------ |
 | Frontend           | React + Vite + Tailwind CSS    |
 | Backend            | Node.js + Express.js           |
-| Primary Database   | PostgreSQL                     |
+| Primary Database   | MongoDB                     |
 | Cache              | Redis                          |
 | Message Broker     | RabbitMQ                       |
 | API Documentation  | OpenAPI / Swagger              |

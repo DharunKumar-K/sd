@@ -46,8 +46,8 @@ graph TB
     end
 
     subgraph "Data Tier"
-        PG_PRI["🐘 PostgreSQL Primary<br/>Port: 5432<br/>ACID · WAL Streaming"]
-        PG_REP["🐘 PostgreSQL Read Replica<br/>Port: 5433<br/>Read-only queries"]
+        PG_PRI["🐘 MongoDB Primary<br/>Port: 5432<br/>ACID · WAL Streaming"]
+        PG_REP["🐘 MongoDB Read Replica<br/>Port: 5433<br/>Read-only queries"]
         REDIS["⚡ Redis Cluster<br/>Port: 6379<br/>Cache · Rate Limit · Queues"]
         RMQ["🐇 RabbitMQ Cluster<br/>Port: 5672 / 15672<br/>Durable Queues · DLQ"]
     end
@@ -146,8 +146,8 @@ graph TB
 | 11 | Fulfilment Service              | Node.js + Express    | 3009  | 2                   | 2                   | PG (R/W)             |
 | 12 | Shipment Service                | Node.js + Express    | 3010  | 2                   | 2                   | PG (R/W)             |
 | 13 | Notification Service            | Node.js + Express    | 3011  | 2                   | 5                   | PG (R/W)             |
-| 14 | PostgreSQL Primary              | PostgreSQL 16        | 5432  | 1                   | 1                   | —                    |
-| 15 | PostgreSQL Read Replica         | PostgreSQL 16        | 5433  | 1                   | 2                   | —                    |
+| 14 | MongoDB Primary              | MongoDB 16        | 5432  | 1                   | 1                   | —                    |
+| 15 | MongoDB Read Replica         | MongoDB 16        | 5433  | 1                   | 2                   | —                    |
 | 16 | Redis Cluster                   | Redis 7              | 6379  | 3 nodes             | 6 nodes             | —                    |
 | 17 | RabbitMQ Cluster                | RabbitMQ 3.13        | 5672  | 3 nodes             | 3 nodes             | —                    |
 | 18 | Prometheus                      | Prometheus           | 9090  | 1                   | 1                   | —                    |
@@ -164,7 +164,7 @@ graph TB
 | CDN                      | ALB                       | HTTPS     | 443   | TLS             |
 | ALB                      | API Gateway               | HTTP      | 3000  | Internal VPC    |
 | API Gateway              | All services              | HTTP      | 300x  | Internal + JWT  |
-| Any service              | PostgreSQL                | TCP       | 5432  | Username/Pass   |
+| Any service              | MongoDB                | TCP       | 5432  | Username/Pass   |
 | Any service              | Redis                     | TCP       | 6379  | AUTH password   |
 | Any service              | RabbitMQ                  | AMQP      | 5672  | Username/Pass   |
 | Payment Service          | Payment Gateway           | HTTPS     | 443   | API Key         |
@@ -175,11 +175,11 @@ graph TB
 
 ## 5. Data Storage Allocation
 
-### 5.1 PostgreSQL Schemas (Logical Separation)
+### 5.1 MongoDB Schemas (Logical Separation)
 
-Each service operates on its own schema within PostgreSQL. No cross-schema queries are permitted.
+Each service operates on its own schema within MongoDB. No cross-schema queries are permitted.
 
-| Schema                    | Service                         | Key Tables                              |
+| Schema                    | Service                         | Key Collections                              |
 | ------------------------- | ------------------------------- | --------------------------------------- |
 | `product`                 | Product Service                 | `products`, `categories`                |
 | `cart`                    | Cart Service                    | `carts`, `cart_items`                   |

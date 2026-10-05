@@ -15,7 +15,7 @@ Each pattern chosen here solves a specific, real problem in the Inventory & Rese
 
 ### Problem
 
-How should the service select the mechanism for atomically decrementing inventory? The correct approach for production (atomic SQL) differs from what a developer might use in integration tests (pessimistic lock) or what a future team might evaluate (Redis Lua script). Hardcoding a single approach into `CheckoutFacade` makes it impossible to test or evolve without modifying the facade.
+How should the service select the mechanism for atomically decrementing inventory? The correct approach for production (atomic MongoDB) differs from what a developer might use in integration tests (pessimistic lock) or what a future team might evaluate (Redis Lua script). Hardcoding a single approach into `CheckoutFacade` makes it impossible to test or evolve without modifying the facade.
 
 ### Solution
 
@@ -65,7 +65,7 @@ The concurrency mechanism is the single most critical decision in this service. 
 
 ### Trade-off
 
-- **Benefit:** Decouples facade from SQL implementation; testable; swappable
+- **Benefit:** Decouples facade from MongoDB implementation; tescollection; swappable
 - **Cost:** Minor indirection overhead. The factory/DI container must be configured to inject the correct strategy.
 - **Mitigation:** In production, only `AtomicConditionalStrategy` is ever injected. The overhead is one extra method call — negligible.
 
@@ -75,7 +75,7 @@ The concurrency mechanism is the single most critical decision in this service. 
 
 ### Problem
 
-`InventoryService` and `ReservationService` need to persist and retrieve domain objects. If they directly use `pgPool.query(...)`, they are coupled to PostgreSQL's API, SQL syntax, and connection management. Unit testing becomes impossible without a real database. Swapping the storage engine requires changes across the entire domain layer.
+`InventoryService` and `ReservationService` need to persist and retrieve domain objects. If they directly use `mongoose.model(...)`, they are coupled to MongoDB's API, MongoDB query syntax, and connection management. Unit testing becomes impossible without a real database. Swapping the storage engine requires changes across the entire domain layer.
 
 ### Solution
 
@@ -88,12 +88,12 @@ interface IInventoryRepository {
   confirmSold(productId: string, quantity: number): Promise<void>;
 }
 
-// Adapter (PostgreSQL implementation)
+// Adapter (MongoDB implementation)
 class InventoryRepository implements IInventoryRepository {
   constructor(private pgPool: Pool) {}
 
   async atomicReserve(productId: string, quantity: number): Promise<number> {
-    const result = await this.pgPool.query(
+    const result = await this.mongoose.model(
       `UPDATE inventory
        SET available_quantity = available_quantity - $1,
            reserved_quantity  = reserved_quantity + $1,
@@ -121,7 +121,7 @@ class MockInventoryRepository implements IInventoryRepository {
 ### Why Chosen
 
 - **Testability:** Unit tests inject `MockInventoryRepository`. No database needed for domain logic tests.
-- **Persistence agnosticism:** Domain services never see SQL. If PostgreSQL is sharded or moved, only the adapter changes.
+- **Persistence agnosticism:** Domain services never see MongoDB. If MongoDB is sharded or moved, only the adapter changes.
 - **Matches architecture contract:** ARCHITECTURE_CONTRACT.md §14 mandates that no service reads another service's database. Repository encapsulates all raw DB access.
 
 ### Trade-off
@@ -209,7 +209,7 @@ class ReservationPolicy {
 
 ### Trade-off
 
-- **Benefit:** Explicit, auditable, testable transition logic. No giant switch statements.
+- **Benefit:** Explicit, audicollection, tescollection transition logic. No giant switch statements.
 - **Cost:** More classes. State map must be kept synchronised with `ReservationStatus` enum.
 - **Mitigation:** TypeScript's exhaustive checking and unit tests per state class catch mismatches.
 
@@ -363,7 +363,7 @@ class CheckoutFacade {
 
 - **Controller simplicity:** `ReservationController` calls one method: `facade.reserve(dto)`. It handles validation, routing, and response — not orchestration.
 - **Transaction boundary ownership:** The facade is the natural place to own the `BEGIN/COMMIT/ROLLBACK` because it knows all the operations that must be atomic.
-- **Testability:** Each collaborator is independently testable. The facade can be tested with mocks for all five dependencies.
+- **Testability:** Each collaborator is independently tescollection. The facade can be tested with mocks for all five dependencies.
 
 ### Trade-off
 

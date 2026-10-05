@@ -107,7 +107,7 @@ sequenceDiagram
     participant OS as Order Service
     participant FS as Fulfilment Service
     participant NS as Notification Service
-    participant DB as PostgreSQL
+    participant DB as MongoDB
 
     Note over C,DB: Order creation is EVENT-DRIVEN, not synchronous
 
@@ -153,8 +153,8 @@ sequenceDiagram
     participant PS as Payment Service
     participant MQ as RabbitMQ
     participant OS as Order Service
-    participant DB_PS as Payments DB (PostgreSQL)
-    participant DB_OS as Orders DB (PostgreSQL)
+    participant DB_PS as Payments DB (MongoDB)
+    participant DB_OS as Orders DB (MongoDB)
     participant DLQ as Dead Letter Queue
     participant ALERT as Alert System
 

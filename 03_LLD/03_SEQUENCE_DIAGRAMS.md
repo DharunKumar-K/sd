@@ -22,7 +22,7 @@ sequenceDiagram
     participant ACS as AtomicConditionalStrategy
     participant RS as ReservationService
     participant REP as ReservationEventPublisher
-    participant PG as PostgreSQL
+    participant PG as MongoDB
     participant REDIS as Redis
     participant RMQOUT as RabbitMQ
 
@@ -90,7 +90,7 @@ sequenceDiagram
     participant B_RC as Request B<br/>ReservationController
     participant A_ACS as Request A<br/>AtomicConditionalStrategy
     participant B_ACS as Request B<br/>AtomicConditionalStrategy
-    participant PG as PostgreSQL<br/>Row Lock Manager
+    participant PG as MongoDB<br/>Row Lock Manager
 
     Note over A_ACS, PG: available_quantity = 1 at this moment
 
@@ -100,7 +100,7 @@ sequenceDiagram
         B_ACS->>PG: UPDATE inventory<br/>SET available_quantity = available_quantity - 1,<br/>    reserved_quantity = reserved_quantity + 1<br/>WHERE available_quantity >= 1
     end
 
-    Note over PG: PostgreSQL serializes both UPDATEs at the row lock level.<br/>One acquires the exclusive lock first. The other WAITS.
+    Note over PG: MongoDB serializes both UPDATEs at the row lock level.<br/>One acquires the exclusive lock first. The other WAITS.
 
     PG-->>A_ACS: LOCK ACQUIRED → WHERE available_quantity(1) >= 1 → TRUE<br/>available_quantity = 0, version++<br/>affected_rows = 1 ✓ COMMIT
 
@@ -130,7 +130,7 @@ sequenceDiagram
     participant RC as ReservationController
     participant CF as CheckoutFacade
     participant IDS as IdempotencyService
-    participant PG as PostgreSQL
+    participant PG as MongoDB
 
     Note over Customer: Network glitch — customer re-sends the same request
 
@@ -158,7 +158,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant CRON as ReservationExpiryWorker<br/>(runs every 30 seconds)
-    participant PG as PostgreSQL
+    participant PG as MongoDB
     participant REP as ReservationEventPublisher
     participant RMQOUT as RabbitMQ
     participant NS as Notification Service
@@ -205,7 +205,7 @@ sequenceDiagram
     participant IDS as IdempotencyService
     participant RS as ReservationService
     participant IS as InventoryService
-    participant PG as PostgreSQL
+    participant PG as MongoDB
     participant REP as ReservationEventPublisher
 
     PAY->>RMQIN: publish PaymentConfirmed<br/>{ eventId, paymentId, reservationId, customerId }
@@ -244,7 +244,7 @@ sequenceDiagram
     participant EH as EventConsumerHandler
     participant RS as ReservationService
     participant IS as InventoryService
-    participant PG as PostgreSQL
+    participant PG as MongoDB
     participant REP as ReservationEventPublisher
     participant RMQOUT as RabbitMQ Out
 

@@ -30,21 +30,21 @@
 
 | Entity | Architecture Contract | Student 3 ER Diagram | Match? |
 |--------|----------------------|---------------------|--------|
-| Customer | CUSTOMER | `customers` table | ✅ |
-| Product | PRODUCT | `products` table | ✅ |
-| Category | CATEGORY | `categories` table | ✅ |
-| Inventory | INVENTORY | `inventory` table | ✅ |
-| Inventory Reservation | INVENTORY_RESERVATION | `inventory_reservation` table | ✅ |
-| Cart | CART | `carts` table | ✅ |
-| Cart Item | CART_ITEM | `cart_items` table | ✅ |
-| Sale | SALE | `sales` table | ✅ |
-| Deal | DEAL | `deals` table | ✅ |
-| Coupon | COUPON | `coupons` table | ✅ |
-| Order | ORDER | `orders` table | ✅ |
-| Order Item | ORDER_ITEM | `order_items` table | ✅ |
-| Payment | PAYMENT | `payments` table | ✅ |
-| Shipment | SHIPMENT | `shipments` table | ✅ |
-| Notification | NOTIFICATION | `notifications` table | ✅ |
+| Customer | CUSTOMER | `customers` collection | ✅ |
+| Product | PRODUCT | `products` collection | ✅ |
+| Category | CATEGORY | `categories` collection | ✅ |
+| Inventory | INVENTORY | `inventory` collection | ✅ |
+| Inventory Reservation | INVENTORY_RESERVATION | `inventory_reservation` collection | ✅ |
+| Cart | CART | `carts` collection | ✅ |
+| Cart Item | CART_ITEM | `cart_items` collection | ✅ |
+| Sale | SALE | `sales` collection | ✅ |
+| Deal | DEAL | `deals` collection | ✅ |
+| Coupon | COUPON | `coupons` collection | ✅ |
+| Order | ORDER | `orders` collection | ✅ |
+| Order Item | ORDER_ITEM | `order_items` collection | ✅ |
+| Payment | PAYMENT | `payments` collection | ✅ |
+| Shipment | SHIPMENT | `shipments` collection | ✅ |
+| Notification | NOTIFICATION | `notifications` collection | ✅ |
 
 ---
 
@@ -188,7 +188,7 @@
 | `payments.idempotency_key UNIQUE` | Task spec | DB schema | ✅ |
 | `payments.transaction_reference UNIQUE` | Task spec | DB schema | ✅ |
 | `orders.reservation_id UNIQUE` | Task spec | DB schema | ✅ |
-| `processed_events` table per service | EVENT_CONTRACT §6 | DB schema + consumer code | ✅ |
+| `processed_events` collection per service | EVENT_CONTRACT §6 | DB schema + consumer code | ✅ |
 | Consumer-side deduplication | INVENTORY_CONTRACT §6 | Event handlers | ✅ |
 
 ---
@@ -204,7 +204,7 @@
 | `fulfilments` | Fulfilment Service | API + events | ✅ |
 | `shipments` | Shipment Service | API + events | ✅ |
 
-**No service in Student 3's design reads another service's database table directly.**
+**No service in Student 3's design reads another service's database collection directly.**
 
 ---
 
@@ -241,10 +241,10 @@
 | Risk | Severity | Mitigation |
 |------|---------|-----------|
 | RabbitMQ single point of failure | HIGH | Clustered RabbitMQ (3 nodes); mirrored queues |
-| PostgreSQL single-point write bottleneck on `inventory` | HIGH | Student 2's atomic SQL handles this; connection pooling |
+| MongoDB single-point write bottleneck on `inventory` | HIGH | Student 2's atomic MongoDB handles this; connection pooling |
 | Payment gateway rate limits during 10K concurrent users | MEDIUM | Circuit breaker + StormShield admission batching |
 | DLQ processing delay (orphaned payments) | MEDIUM | 5-minute reconciliation job; DLQ alert P1 |
-| Student 2's TTL cron lag (30s max) | LOW | Acceptable for 5-minute TTL |
+| Student 2's TTL cron lag (30s max) | LOW | Accepcollection for 5-minute TTL |
 
 ---
 

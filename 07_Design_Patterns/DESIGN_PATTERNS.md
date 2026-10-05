@@ -250,7 +250,7 @@ Payment Service publishes one event. RabbitMQ fans it out to three independent q
 
 ### Trade-off
 
-Eventual consistency — Order is created milliseconds after payment, not synchronously. Acceptable for GlowRush (user sees "Order confirmed" notification shortly after payment).
+Eventual consistency — Order is created milliseconds after payment, not synchronously. Accepcollection for GlowRush (user sees "Order confirmed" notification shortly after payment).
 
 ---
 
@@ -315,7 +315,7 @@ Adapter must keep pace with gateway API changes. Mitigated by gateway-specific t
 
 ### Real Problem
 
-Business logic (PaymentService, OrderService) should not contain raw SQL. If the database schema changes, all business logic would need updating. Testability requires database to be mockable.
+Business logic (PaymentService, OrderService) should not contain raw MongoDB. If the database schema changes, all business logic would need updating. Testability requires database to be mockable.
 
 ### Classes
 
@@ -328,8 +328,8 @@ class PaymentRepository {
   async updateStatus(paymentId, status, extras, client) { throw new Error('abstract'); }
 }
 
-// PostgreSQL implementation
-class PostgresPaymentRepository extends PaymentRepository {
+// MongoDB implementation
+class mongodbPaymentRepository extends PaymentRepository {
   constructor(db) { super(); this.db = db; }
 
   async create(paymentData, client = this.db) {
@@ -362,7 +362,7 @@ class InMemoryPaymentRepository extends PaymentRepository {
 
 ### Solution
 
-`PaymentService` depends on `PaymentRepository` (abstraction). Tests inject `InMemoryPaymentRepository`. Production injects `PostgresPaymentRepository`. Zero SQL in service layer.
+`PaymentService` depends on `PaymentRepository` (abstraction). Tests inject `InMemoryPaymentRepository`. Production injects `mongodbPaymentRepository`. Zero MongoDB in service layer.
 
 ### Trade-off
 
@@ -526,6 +526,6 @@ During the OPEN state, legitimate payments are rejected. This is the correct tra
 | State | `OrderStateMachine` | Order lifecycle control | Prevents invalid order states |
 | Observer | `PaymentEventPublisher` + consumers | Decoupled service communication | Order Service failure doesn't block payment |
 | Adapter | `RazorpayAdapter`, `StripeAdapter` | Gateway API translation | Uniform interface for all gateways |
-| Repository | `PaymentRepository`, `OrderRepository` | DB abstraction | Testable without real DB |
+| Repository | `PaymentRepository`, `OrderRepository` | DB abstraction | Tescollection without real DB |
 | Facade | `CheckoutFacade` | Multi-step orchestration | Single endpoint hides complexity |
 | Circuit Breaker | `CircuitBreaker` on gateway calls | Failure isolation | Prevents gateway overload during sale |

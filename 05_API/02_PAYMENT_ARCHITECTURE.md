@@ -175,7 +175,7 @@ Webhook: POST /api/v1/payments/webhook
     ↓
 Payment Service:
     UPDATE payments SET status = 'FAILED', failure_reason = :reason
-    (within PostgreSQL transaction)
+    (within MongoDB transaction)
     ↓
 POST-COMMIT:
     Publish PaymentFailed to RabbitMQ

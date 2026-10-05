@@ -11,7 +11,7 @@
 10,000 customers simultaneously click "Buy Now" for a product with **100 units** of stock.  
 **Constraint:** `available_quantity` must never become negative. Maximum 100 successful reservations.
 
-All 10,000 requests eventually reach the Inventory & Reservation Service and attempt to decrement the same `inventory` row. PostgreSQL is the single source of truth. Three classical strategies exist — we analyze all three.
+All 10,000 requests eventually reach the Inventory & Reservation Service and attempt to decrement the same `inventory` row. MongoDB is the single source of truth. Three classical strategies exist — we analyze all three.
 
 ---
 
@@ -43,7 +43,7 @@ COMMIT;
 | **Correctness** | ✅ Fully correct — exclusive lock ensures no concurrent modification |
 | **Performance** | ❌ Very poor under high concurrency. Each `FOR UPDATE` blocks all others on same row. |
 | **Contention** | ❌ Extreme. 10,000 requests queue for the same lock. Lock hold time = SELECT + application logic + UPDATE + COMMIT. |
-| **Complexity** | Medium. Requires explicit transaction management. Deadlock possible with multiple table locks. |
+| **Complexity** | Medium. Requires explicit transaction management. Deadlock possible with multiple collection locks. |
 | **Failure Behaviour** | ❌ Lock holder crash leaves lock held until session timeout (typically 30s). All 9,999 others wait. |
 | **Scalability** | ❌ Strictly serial. Adding more Inventory Service instances doesn't help — they all queue at the DB row. |
 
@@ -137,17 +137,17 @@ WHERE product_id = :product_id
 
 | Dimension | Assessment |
 |-----------|-----------|
-| **Correctness** | ✅ Perfect. The `WHERE available_quantity >= 1` is enforced by PostgreSQL atomically. Impossible to oversell. |
-| **Performance** | ✅ Excellent. Single SQL statement. No application-level read → check → update cycle. Lock held only for UPDATE execution time (~1ms). |
-| **Contention** | ✅ Minimal lock hold time means throughput is maximized even under contention. PostgreSQL serializes at the row level but hold time is tiny. |
+| **Correctness** | ✅ Perfect. The `WHERE available_quantity >= 1` is enforced by MongoDB atomically. Impossible to oversell. |
+| **Performance** | ✅ Excellent. Single MongoDB statement. No application-level read → check → update cycle. Lock held only for UPDATE execution time (~1ms). |
+| **Contention** | ✅ Minimal lock hold time means throughput is maximized even under contention. MongoDB serializes at the row level but hold time is tiny. |
 | **Complexity** | ✅ Low. No retry logic needed. Simple `affected_rows` check. No version tracking required (version field retained for audit/observability only). |
-| **Failure Behaviour** | ✅ If the transaction aborts, PostgreSQL rolls back automatically. No partial state. No orphaned decrements. |
+| **Failure Behaviour** | ✅ If the transaction aborts, MongoDB rolls back automatically. No partial state. No orphaned decrements. |
 | **Scalability** | ✅ Best possible for row-level contention. Adding DB read replicas handles read traffic. StormShield throttles write concurrency to manageable levels. |
 
 ### Why It Prevents Overselling (Proof)
 
 ```
-PostgreSQL Row Lock Serialization:
+MongoDB Row Lock Serialization:
 
 State: available_quantity = 1
 
@@ -166,7 +166,7 @@ Result: Thread A succeeds. Thread B fails. available_quantity = 0. NEVER negativ
 ```
 
 **Even if 10,000 threads execute simultaneously:**
-- PostgreSQL's row-level locking serializes them
+- MongoDB's document-level locking serializes them
 - Each thread sees the post-previous-transaction value of `available_quantity`
 - The `WHERE` clause is re-evaluated after acquiring the lock against the current committed value
 - Only the first N threads (where N = initial stock) will find `available_quantity >= 1`
@@ -241,4 +241,4 @@ Together, they make the system both correct AND performant.
 ---
 
 > [!IMPORTANT]
-> The `version` field in the `inventory` table is retained for **observability** (audit, change detection) but is NOT used as an optimistic lock guard in our atomic update query. This is intentional. The `WHERE available_quantity >= quantity` is the correctness check, not the version comparison.
+> The `version` field in the `inventory` collection is retained for **observability** (audit, change detection) but is NOT used as an optimistic lock guard in our atomic update query. This is intentional. The `WHERE available_quantity >= quantity` is the correctness check, not the version comparison.

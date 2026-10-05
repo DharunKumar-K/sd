@@ -31,12 +31,12 @@
 
 | Object               | Format          | Example                         |
 | -------------------- | --------------- | ------------------------------- |
-| Table names          | snake_case, plural | `inventory_reservations`     |
+| Collection names          | snake_case, plural | `inventory_reservations`     |
 | Column names         | snake_case      | `available_quantity`            |
-| Primary keys         | `<table_singular>_id` | `reservation_id`          |
-| Foreign keys         | `<referenced_table_singular>_id` | `product_id`    |
-| Indexes              | `idx_<table>_<columns>` | `idx_reservations_product_id` |
-| Unique constraints   | `uq_<table>_<columns>` | `uq_reservations_idempotency_key` |
+| Primary keys         | `<collection_singular>_id` | `reservation_id`          |
+| Foreign keys         | `<referenced_collection_singular>_id` | `product_id`    |
+| Indexes              | `idx_<collection>_<columns>` | `idx_reservations_product_id` |
+| Unique constraints   | `uq_<collection>_<columns>` | `uq_reservations_idempotency_key` |
 | Enums                | SCREAMING_SNAKE | `PAYMENT_PENDING`, `CONFIRMED` |
 
 ---
@@ -95,7 +95,7 @@
 | --------------------- | ----------------------------------- | ----------------------------- |
 | Container names       | `glowrush-<service>`                | `glowrush-api-gateway`        |
 | Docker network        | `glowrush-network`                  |                               |
-| Docker volumes        | `glowrush-<service>-data`           | `glowrush-postgres-data`      |
+| Docker volumes        | `glowrush-<service>-data`           | `glowrush-mongodb-data`      |
 | Compose service names | kebab-case                          | `inventory-reservation-service` |
 | Port mapping          | `<host>:<container>`                | `3001:3000`                   |
 
@@ -106,7 +106,7 @@
 | Item                  | Format                              | Example                       |
 | --------------------- | ----------------------------------- | ----------------------------- |
 | File names            | SCREAMING_SNAKE.md                  | `ARCHITECTURE_CONTRACT.md`    |
-| ADR files             | `ADR-NNN_TITLE.md`                  | `ADR-001_SQL_VS_NOSQL.md`     |
+| ADR files             | `ADR-NNN_TITLE.md`                  | `ADR-001_MongoDB_VS_NOMongoDB.md`     |
 | Diagram files         | kebab-case + extension              | `system-context.mmd`          |
 
 ---

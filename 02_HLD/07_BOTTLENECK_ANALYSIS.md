@@ -18,7 +18,7 @@ graph TD
         B1["🔴 B1: API Gateway<br/>Connection exhaustion"]
         B2["🟡 B2: StormShield<br/>Redis sorted set contention"]
         B3["🔴 B3: Inventory DB Row Lock<br/>Single-row contention"]
-        B4["🟡 B4: PostgreSQL Connections<br/>Connection pool exhaustion"]
+        B4["🟡 B4: MongoDB Connections<br/>Connection pool exhaustion"]
         B5["🟡 B5: Payment Gateway<br/>External rate limits"]
         B6["🟢 B6: RabbitMQ Throughput<br/>Queue backpressure"]
         B7["🟡 B7: Redis Memory<br/>Eviction during peak"]
@@ -80,7 +80,7 @@ graph TD
 | ------------------ | --------------------------------------------------------------- |
 | **Severity**       | 🔴 Critical — this is the hottest point in the entire system     |
 | **When**           | Multiple concurrent `UPDATE inventory WHERE available_quantity >= 1` hit the same row |
-| **Why**            | PostgreSQL uses row-level locking; concurrent updates on the same row serialize |
+| **Why**            | MongoDB uses document-level locking; concurrent updates on the same row serialize |
 | **Impact**         | Transaction queue on the inventory row; p99 latency > 1s; connection pool exhaustion |
 | **Mitigation**     |                                                                 |
 | 1. StormShield     | Throttles admission to ~50 concurrent reservation attempts      |
@@ -90,7 +90,7 @@ graph TD
 | 5. No read-before-write | Skip `SELECT` before `UPDATE`; let the `WHERE` clause handle the check |
 | **Post-Mitigation**| ~500-1000 reservation attempts/sec (with 50-user batches from StormShield) |
 
-**Why this works:** StormShield converts 10,000 simultaneous requests into ~200 batches of 50, spaced seconds apart. Each batch's 50 `UPDATE` statements complete in ~50-100ms total because each individual `UPDATE` takes ~1-2ms with row-level locking.
+**Why this works:** StormShield converts 10,000 simultaneous requests into ~200 batches of 50, spaced seconds apart. Each batch's 50 `UPDATE` statements complete in ~50-100ms total because each individual `UPDATE` takes ~1-2ms with document-level locking.
 
 ```
 Without StormShield: 10,000 concurrent UPDATEs → row lock contention → ~10s total
@@ -99,16 +99,16 @@ With StormShield:    50 concurrent UPDATEs × ~200 batches → ~100ms per batch 
 
 ---
 
-### B4: PostgreSQL Connection Pool Exhaustion
+### B4: MongoDB Connection Pool Exhaustion
 
 | Attribute          | Detail                                                          |
 | ------------------ | --------------------------------------------------------------- |
 | **Severity**       | 🟡 Significant                                                   |
 | **When**           | Many service instances open connections simultaneously           |
-| **Why**            | PostgreSQL max_connections is finite (~400); each Node.js instance needs a pool |
+| **Why**            | MongoDB max_connections is finite (~400); each Node.js instance needs a pool |
 | **Impact**         | `FATAL: too many connections` → service failures                |
 | **Mitigation**     |                                                                 |
-| 1. PgBouncer       | Connection multiplexing; 200 external → 50 PostgreSQL connections |
+| 1. PgBouncer       | Connection multiplexing; 200 external → 50 MongoDB connections |
 | 2. Pool sizing     | Each service instance: pool min=2, max=10                       |
 | 3. Idle timeout    | Close idle connections after 30s                                |
 | 4. Read replicas   | Route read queries to replicas                                  |
@@ -173,7 +173,7 @@ With StormShield:    50 concurrent UPDATEs × ~200 batches → ~100ms per batch 
 | ---- | ------------------------------- | -------- | ------------------------------- | ------------------------- |
 | 1    | Inventory DB row contention     | 🔴       | Overselling, timeouts, crashes  | ~50 concurrent UPDATEs, smooth |
 | 2    | API Gateway connections         | 🔴       | Service unavailable             | 10K+ req/s capacity      |
-| 3    | PostgreSQL connection pool      | 🟡       | Service failures                | PgBouncer multiplexing    |
+| 3    | MongoDB connection pool      | 🟡       | Service failures                | PgBouncer multiplexing    |
 | 4    | Payment gateway rate limits     | 🟡       | Payment delays/failures         | Retry + circuit breaker   |
 | 5    | StormShield Redis contention    | 🟡       | Queue insertion delays          | Redis cluster + pipeline  |
 | 6    | Redis memory pressure           | 🟡       | Cache eviction                  | TTLs + cluster            |

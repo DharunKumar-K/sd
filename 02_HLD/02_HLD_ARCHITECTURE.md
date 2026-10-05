@@ -50,7 +50,7 @@ graph TB
     end
 
     subgraph "Data Layer"
-        PG[(🐘 PostgreSQL<br/>Primary + Read Replicas)]
+        PG[(🐘 MongoDB<br/>Primary + Read Replicas)]
         RD[(⚡ Redis Cluster<br/>Cache · Rate Limit · Queue)]
         RMQ[🐇 RabbitMQ<br/>Durable Queues · DLQ]
     end
@@ -175,11 +175,11 @@ Payment → [RabbitMQ] → Order → [RabbitMQ] → Fulfilment → [RabbitMQ] �
 ---
 
 ### Layer 5 — Data Layer
-**Components:** PostgreSQL, Redis, RabbitMQ
+**Components:** MongoDB, Redis, RabbitMQ
 
 | Component   | Role                                                              |
 | ----------- | ----------------------------------------------------------------- |
-| PostgreSQL  | Source of truth for all business data; ACID transactions          |
+| MongoDB  | Source of truth for all business data; ACID transactions          |
 | Redis       | Cache (products, sale config), rate limiting, StormShield queues, checkout sessions |
 | RabbitMQ    | Durable async event bus; topic exchange; dead-letter queues       |
 
@@ -273,10 +273,10 @@ sequenceDiagram
 | Principle                       | Application                                              |
 | ------------------------------- | -------------------------------------------------------- |
 | **Single Responsibility**       | Each service owns exactly one business domain            |
-| **Database per Service**        | No shared database tables; data access via APIs/events   |
+| **Database per Service**        | No shared database collections; data access via APIs/events   |
 | **Fail Fast at the Edge**       | StormShield + API Gateway reject overflow immediately    |
-| **Fail Safe at the Core**       | Atomic SQL ensures inventory can never go negative       |
+| **Fail Safe at the Core**       | Atomic MongoDB ensures inventory can never go negative       |
 | **Eventual Consistency**        | Post-payment flow is async; order creation is eventual   |
 | **Idempotency Everywhere**      | Every write operation supports safe retry                |
 | **Observability by Default**    | Correlation ID, structured logs, metrics, traces         |
-| **Defense in Depth**            | CDN → WAF → Rate Limit → Auth → StormShield → Atomic SQL|
+| **Defense in Depth**            | CDN → WAF → Rate Limit → Auth → StormShield → Atomic MongoDB|

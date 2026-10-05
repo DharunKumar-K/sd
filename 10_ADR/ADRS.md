@@ -4,24 +4,24 @@
 
 ---
 
-## ADR 1: SQL vs NoSQL for Primary Database
+## ADR 1: MongoDB as Primary Database (Replaces MongoDB)
 
 **Context:** The system needs to store business-critical data (products, inventory, payments, orders) and handle high-concurrency updates during flash sales.
 
 **Options:**
-1. SQL (PostgreSQL)
-2. NoSQL (MongoDB, DynamoDB)
+1. MongoDB (MongoDB)
+2. NoMongoDB (MongoDB, DynamoDB)
 
-**Decision:** We chose **SQL (PostgreSQL)**.
+**Decision:** We chose **MongoDB**. (See ADR-MONGODB-001)
 
 **Reasons:**
-- Strict ACID properties are mandatory to guarantee inventory is never negative.
-- Relational mapping is natural for e-commerce (Orders -> Items, Customers -> Reservations).
-- PostgreSQL provides powerful row-level locking and atomic update mechanisms essential for our concurrency strategy.
+- MongoDB supports multi-document ACID transactions when multiple documents must change atomically (e.g., reservation and related records).
+- MongoDB's rich query language allows for atomic conditional updates without needing document-level locking deadlocks typical in MongoDB.
+- MongoDB Atlas provides robust horizontal scaling and replica sets.
 
 **Trade-offs & Consequences:**
-- *Trade-off:* Relational databases are harder to scale horizontally for writes compared to NoSQL.
-- *Consequence:* We must use StormShield to throttle write concurrency to a level PostgreSQL can comfortably handle on a single primary node. We will use read replicas to scale read traffic.
+- *Trade-off:* Multi-document transactions in MongoDB have a performance overhead compared to single-document updates.
+- *Consequence:* We must use StormShield to throttle write concurrency to a level MongoDB can comfortably handle, keeping transaction scopes small and fast.
 
 ---
 
@@ -64,7 +64,7 @@
 
 **Trade-offs & Consequences:**
 - *Trade-off:* We lose the ability to perform complex application-level validation *before* the update within the same lock.
-- *Consequence:* We must design the schema so the conditional logic can be entirely expressed in the SQL `WHERE` clause.
+- *Consequence:* We must design the schema so the conditional logic can be entirely expressed in the MongoDB `WHERE` clause.
 
 ---
 
@@ -73,14 +73,14 @@
 **Context:** API Gateway and Business Services need low-latency access to rate limits, active sale metadata, and queue positions.
 
 **Options:**
-1. No caching (hit PostgreSQL for everything)
+1. No caching (hit MongoDB for everything)
 2. In-memory caching per Node.js process (e.g., node-cache)
 3. Distributed cache (Redis)
 
 **Decision:** We chose a **Distributed Cache (Redis)**.
 
 **Reasons:**
-- Flash sales create massive read spikes on identical data (Product info, Sale config). A distributed cache protects PostgreSQL.
+- Flash sales create massive read spikes on identical data (Product info, Sale config). A distributed cache protects MongoDB.
 - StormShield requires shared state across all its instances for the waiting room queue (Sorted Sets). Local memory caches cannot do this.
 - Rate limiting at the API Gateway requires a centralized counter.
 
@@ -113,7 +113,7 @@
 
 ## ADR 6: StormShield Virtual Waiting Room
 
-**Context:** 10,000 concurrent requests will overwhelm PostgreSQL's connection pool and row-lock limits if allowed through simultaneously.
+**Context:** 10,000 concurrent requests will overwhelm MongoDB's connection pool and row-lock limits if allowed through simultaneously.
 
 **Options:**
 1. Scale up the database massively for 5 minutes.
@@ -123,7 +123,7 @@
 **Decision:** We chose to build **StormShield (Virtual Waiting Room)**.
 
 **Reasons:**
-- Scaling the DB to handle 10,000 concurrent writes to a single row is fundamentally impossible due to row-level locking, regardless of hardware size.
+- Scaling the DB to handle 10,000 concurrent writes to a single row is fundamentally impossible due to document-level locking, regardless of hardware size.
 - TCP queueing leads to random timeouts, poor UX, and unfairness.
 - StormShield provides fair (FIFO) queueing, clear UX (wait times), and protects the database by only admitting traffic at a rate it can digest (~20-50 per batch).
 
@@ -133,21 +133,22 @@
 
 ---
 
-## ADR 7: PostgreSQL as Source of Truth
+## ADR 7: MongoDB as Source of Truth
 
 **Context:** During a flash sale, Redis could be used as an in-memory inventory counter for extreme speed.
 
 **Options:**
-1. Redis as Source of Truth (decrement in Redis, sync to PG later).
-2. PostgreSQL as Source of Truth (decrement in PG directly).
+1. Redis as Source of Truth (decrement in Redis, sync to DB later).
+2. MongoDB as Source of Truth (decrement in DB directly).
 
-**Decision:** We chose **PostgreSQL as Source of Truth**.
+**Decision:** We chose **MongoDB as Source of Truth**.
 
 **Reasons:**
 - **Strict Guarantee:** The business requirement explicitly states inventory must NEVER be negative and orders must not be lost.
-- Redis, while fast, is an in-memory data store where edge-case data loss (e.g., during a master-replica failover or crash before AOF sync) is possible.
-- Reconciling an asynchronous Redis counter with a relational order database leads to severe "split-brain" scenarios if failures occur mid-transaction.
+- Redis, while fast, is an in-memory data store where edge-case data loss is possible.
+- Reconciling an asynchronous Redis counter with a durable database leads to severe "split-brain" scenarios if failures occur mid-transaction.
+- MongoDB allows atomic conditional updates (`updateOne` with `$gte` and `$inc`) safely.
 
 **Trade-offs & Consequences:**
 - *Trade-off:* Lower raw write throughput compared to a pure Redis counter.
-- *Consequence:* We mitigate the throughput limit using StormShield (ADR 6) to ensure the load reaching PostgreSQL never exceeds its safe operational limits.
+- *Consequence:* We mitigate the throughput limit using StormShield (ADR 6) to ensure the load reaching MongoDB never exceeds its safe operational limits.

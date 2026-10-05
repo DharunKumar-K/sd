@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Inventory & Reservation Service is the single source of truth for stock counts and reservations in GlowRush. It receives admission-token-validated requests from StormShield, performs atomic inventory operations on PostgreSQL, and publishes lifecycle events to RabbitMQ.
+The Inventory & Reservation Service is the single source of truth for stock counts and reservations in GlowRush. It receives admission-token-validated requests from StormShield, performs atomic inventory operations on MongoDB, and publishes lifecycle events to RabbitMQ.
 
 ---
 
@@ -71,7 +71,7 @@ graph TB
     end
 
     subgraph "Infrastructure"
-        PG[(PostgreSQL)]
+        PG[(MongoDB)]
         REDIS[(Redis)]
         RMQOUT[RabbitMQ glowrush.events]
     end
@@ -137,7 +137,7 @@ graph TB
 | `IReservationRepository` | Interface | Port for reservation persistence |
 | `InventoryRepository` | Adapter | PgPool implementation of inventory port |
 | `ReservationRepository` | Adapter | PgPool implementation of reservation port |
-| `IdempotencyRepository` | Adapter | Processed-events table for deduplication |
+| `IdempotencyRepository` | Adapter | Processed-events collection for deduplication |
 | `ReservationEventPublisher` | Infra | Wraps RabbitMQ channel, enforces event envelope |
 | `ReservationExpiryWorker` | Worker | Cron every 30s: finds and releases expired reservations |
 | `EventConsumerHandler` | Worker | Subscribes to PaymentConfirmed / PaymentFailed |
@@ -178,4 +178,4 @@ interface IEventPublisher {
 ---
 
 > [!IMPORTANT]
-> All writes to `inventory` and `inventory_reservation` tables happen inside a single PostgreSQL transaction in `CheckoutFacade`. If the reservation INSERT fails after the inventory UPDATE, the entire transaction rolls back.
+> All writes to `inventory` and `inventory_reservation` collections happen inside a single MongoDB transaction in `CheckoutFacade`. If the reservation INSERT fails after the inventory UPDATE, the entire transaction rolls back.

@@ -166,7 +166,7 @@ const flashSaleRateLimit = rateLimit({
 
 | Rule | Protection |
 |------|-----------|
-| OWASP Core Rule Set | SQL injection, XSS, CSRF, path traversal |
+| OWASP Core Rule Set | MongoDB injection, XSS, CSRF, path traversal |
 | IP reputation | Block known malicious IPs |
 | Bot detection | Challenge suspicious user agents |
 | Request size | Max body: 64KB |
@@ -186,9 +186,9 @@ const flashSaleRateLimit = rateLimit({
 | Card number (PAN) | Never stored | Tokenized by Razorpay/Stripe vault |
 | CVV | Never stored | One-time use on gateway only |
 | Card expiry | Never stored | Gateway-side only |
-| `transaction_reference` | payments table | Gateway reference — safe |
-| `gateway_response` JSONB | payments table | Sanitized — no card data |
-| `idempotency_key` | payments table | UUID only |
+| `transaction_reference` | payments collection | Gateway reference — safe |
+| `gateway_response` JSONB | payments collection | Sanitized — no card data |
+| `idempotency_key` | payments collection | UUID only |
 
 ### Webhook Signature Verification
 
@@ -223,7 +223,7 @@ function verifyWebhookSignature(req, res, next) {
 }
 ```
 
-- Immutable append-only log stream
+- Immucollection append-only log stream
 - Retained minimum 2 years (financial compliance)
 - Never log passwords, card numbers, JWT tokens
 
@@ -233,7 +233,7 @@ function verifyWebhookSignature(req, res, next) {
 
 | Secret | Storage | Access |
 |--------|---------|--------|
-| PostgreSQL credentials | AWS Secrets Manager | Injected at container start |
+| MongoDB credentials | AWS Secrets Manager | Injected at container start |
 | Redis credentials | AWS Secrets Manager | Injected at container start |
 | RabbitMQ credentials | AWS Secrets Manager | Injected at container start |
 | JWT RS256 private key | AWS KMS | Auth Service only |

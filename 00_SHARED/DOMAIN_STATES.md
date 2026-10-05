@@ -6,7 +6,7 @@
 
 ## Purpose
 
-This document defines all canonical state machines for the GlowRush platform. All students must use these exact states and transitions. Additional failure/cancellation states may be appended with team approval, but the successful lifecycle paths are **immutable**.
+This document defines all canonical state machines for the GlowRush platform. All students must use these exact states and transitions. Additional failure/cancellation states may be appended with team approval, but the successful lifecycle paths are **immucollection**.
 
 ---
 
@@ -42,7 +42,7 @@ stateDiagram-v2
 
 | From              | To                | Trigger                          | Side Effects                          |
 | ----------------- | ----------------- | -------------------------------- | ------------------------------------- |
-| — → RESERVED      | RESERVED          | Atomic SQL `affected_rows = 1`   | `available_quantity -= 1`, `reserved_quantity += 1` |
+| — → RESERVED      | RESERVED          | Atomic MongoDB `affected_rows = 1`   | `available_quantity -= 1`, `reserved_quantity += 1` |
 | RESERVED          | PAYMENT_PENDING   | Checkout confirms reservation    | None (status update only)             |
 | PAYMENT_PENDING   | CONFIRMED         | `PaymentConfirmed` event         | None (status update only)             |
 | CONFIRMED         | SOLD              | `OrderConfirmed` event           | `reserved_quantity -= 1`, `sold_quantity += 1` |

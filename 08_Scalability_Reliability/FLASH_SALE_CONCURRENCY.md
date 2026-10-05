@@ -62,7 +62,7 @@ StormShield has 5 instances (all sharing Redis state):
 | API Gateway     | User-based  | 10 req/min (flash sale)   | Redis sliding window         |
 | API Gateway     | Global      | 50,000 req/s total        | Redis counter                |
 | StormShield     | Sale-based  | Max queue size: 50,000    | Redis `ZCARD` check          |
-| Inventory       | Implicit    | `available_quantity >= 1` | SQL `WHERE` clause           |
+| Inventory       | Implicit    | `available_quantity >= 1` | MongoDB `WHERE` clause           |
 
 **Key point:** Rate limiting is **layered**. Each layer reduces the request volume before the next layer.
 
@@ -136,16 +136,16 @@ T=5min  Some reservations expire (unpaid).
 
 | Service                         | Limiting Factor                              | Workaround              |
 | ------------------------------- | -------------------------------------------- | ----------------------- |
-| Inventory & Reservation Service | PostgreSQL row lock on `inventory` table     | StormShield throttling  |
+| Inventory & Reservation Service | MongoDB atomic update on inventory collection     | StormShield throttling  |
 | Payment Service                 | External gateway rate limit                  | Circuit breaker + retry |
 
-**Key point:** Adding more Inventory instances does NOT increase reservation throughput because they all contend on the same PostgreSQL row. StormShield is the throttle.
+**Key point:** Adding more Inventory instances does NOT increase reservation throughput because they all contend on the same MongoDB row. StormShield is the throttle.
 
 ---
 
 ## 7. Where the Exact Inventory Consistency Point Exists
 
-**The consistency point is a single SQL statement:**
+**The consistency point is a single MongoDB statement:**
 
 ```sql
 UPDATE inventory
@@ -159,10 +159,10 @@ WHERE product_id = :product_id
 ```
 
 **Properties of this statement:**
-- **Atomic:** PostgreSQL executes this as a single atomic operation
-- **Row-locked:** PostgreSQL acquires a row-level exclusive lock for the duration of the UPDATE
+- **Atomic:** MongoDB executes this as a single atomic operation
+- **Row-locked:** MongoDB acquires a row-level exclusive lock for the duration of the UPDATE
 - **Self-validating:** The `WHERE available_quantity >= 1` clause prevents negative inventory
-- **Serialized:** Concurrent UPDATEs on the same row are serialized by PostgreSQL's lock manager
+- **Serialized:** Concurrent UPDATEs on the same row are serialized by MongoDB's lock manager
 
 **Result:**
 - `affected_rows = 1` → Reservation successful. Proceed.
@@ -212,7 +212,7 @@ RETURNING *;
 | Mechanism          | How It Works                                                    |
 | ------------------ | --------------------------------------------------------------- |
 | **Event ID**       | Every RabbitMQ message has unique `eventId`                    |
-| **Processed check**| Consumer checks `processed_events` table before processing    |
+| **Processed check**| Consumer checks `processed_events` collection before processing    |
 | **Idempotent ops** | All event handlers are written to be idempotent                |
 
 ---
@@ -289,17 +289,17 @@ WHERE product_id = :product_id;
 | 2     | StormShield controlled admission (20-50 per batch)               | Thundering herd                |
 | 3     | Admission token (single-use, 60s TTL)                            | Token replay                   |
 | 4     | Idempotency key (UNIQUE constraint)                              | Duplicate reservations         |
-| 5     | **Atomic SQL: `WHERE available_quantity >= 1`**                  | **Negative inventory**         |
+| 5     | **Atomic MongoDB: `WHERE available_quantity >= 1`**                  | **Negative inventory**         |
 
 **The ultimate guarantee is Layer 5.** Even if every other layer fails:
 - StormShield crashes → All 10,000 hit Inventory directly
 - Rate limiting disabled → All requests reach the database
 - Idempotency bypassed → Multiple attempts per user
 
-**The SQL `WHERE available_quantity >= 1` still prevents negative inventory.** The worst case is that PostgreSQL serializes 10,000 UPDATE statements on the same row (slow, but correct). Only 100 will succeed. The rest get `affected_rows = 0`.
+**The MongoDB `{ available_quantity: { $gte: 1 } }` filter still prevents negative inventory.** The worst case is that MongoDB serializes 10,000 UPDATE statements on the same row (slow, but correct). Only 100 will succeed. The rest get `affected_rows = 0`.
 
 ```
-INVARIANT (enforced by PostgreSQL):
+INVARIANT (enforced by MongoDB):
     available_quantity >= 0    (guaranteed by WHERE clause)
     reserved_quantity >= 0     (never decremented below 0)
     sold_quantity >= 0         (only incremented)

@@ -151,7 +151,7 @@ If RabbitMQ is replaced with another broker in a future phase, a new `SomeOtherB
 
 ## L — Liskov Substitution Principle
 
-> *Subtypes must be substitutable for their base types without altering program correctness.*
+> *Subtypes must be substitucollection for their base types without altering program correctness.*
 
 ### `AtomicConditionalStrategy` implements `ConcurrencyStrategy`
 
@@ -243,7 +243,7 @@ interface IReservationRepository {
 }
 ```
 
-`ReservationService` depends on this. It does not see SQL-level details, pgPool references, or any admin-level operations (truncate, etc.) that only a database admin might use.
+`ReservationService` depends on this. It does not see MongoDB-level details, pgPool references, or any admin-level operations (truncate, etc.) that only a database admin might use.
 
 ---
 
@@ -258,10 +258,10 @@ High-level: InventoryService, CheckoutFacade
                      ↓ depend on
 Abstraction: IInventoryRepository (interface)
                      ↑ implemented by
-Low-level: InventoryRepository (PgPool SQL)
+Low-level: InventoryRepository (PgPool MongoDB)
 ```
 
-`InventoryService` never `import`s `InventoryRepository` directly. It receives `IInventoryRepository` via constructor injection. Swapping PostgreSQL for another store only requires a new implementation, not a change to `InventoryService`.
+`InventoryService` never `import`s `InventoryRepository` directly. It receives `IInventoryRepository` via constructor injection. Swapping MongoDB for another store only requires a new implementation, not a change to `InventoryService`.
 
 ---
 
@@ -298,7 +298,7 @@ All five dependencies are interfaces or domain classes — never concrete infras
 
 ---
 
-## SOLID Summary Table
+## SOLID Summary Collection
 
 | Class | S | O | L | I | D |
 |-------|---|---|---|---|---|

@@ -9,7 +9,7 @@
 ## 1. Reliability Principles
 
 1. **Fail fast at the edge** — StormShield rejects traffic overload before it reaches business logic
-2. **Fail safe at the core** — Atomic SQL prevents oversell; UNIQUE constraints prevent duplicates
+2. **Fail safe at the core** — Atomic MongoDB prevents oversell; UNIQUE constraints prevent duplicates
 3. **Fail forward with events** — Async failures go to DLQ, never silently dropped
 4. **Fail recoverable** — Every failure state has a documented recovery path
 5. **Idempotent everywhere** — Every write operation is safe to retry
@@ -303,7 +303,7 @@ Inventory Service releases reservation
 
 ### Scenario 1 — Database Unavailable
 
-**Affected service:** Any service with PostgreSQL dependency
+**Affected service:** Any service with MongoDB dependency
 
 | Phase | Behaviour |
 |-------|-----------|
@@ -349,14 +349,14 @@ Inventory Service releases reservation
 | Phase | Behaviour |
 |-------|-----------|
 | Payment Service cannot publish | Retry 3x (1s, 5s, 25s) |
-| Still unavailable | Use **Outbox Pattern**: write event to `outbox_events` table within same DB transaction |
+| Still unavailable | Use **Outbox Pattern**: write event to `outbox_events` collection within same DB transaction |
 | Outbox processor | Background job polls `outbox_events` every 5s; publishes to RabbitMQ when available |
 | Inventory stays `PAYMENT_PENDING` | TTL safety net releases stock within 5 minutes |
 | Order not created | Reconciliation job detects orphaned payment → creates order on recovery |
 
-**Outbox Table:**
+**Outbox Collection:**
 ```sql
-CREATE TABLE outbox_events (
+CREATE COLLECTION outbox_events (
     outbox_id    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     routing_key  VARCHAR(100) NOT NULL,
     payload      JSONB        NOT NULL,
@@ -369,7 +369,7 @@ CREATE TABLE outbox_events (
 
 ### Scenario 5 — Duplicate Events
 
-**Protection:** `processed_events` table in each consumer service.
+**Protection:** `processed_events` collection in each consumer service.
 Every consumer checks `event_id` before processing. If already processed → ACK and skip.
 Database UNIQUE constraint on `orders.reservation_id` provides a second layer.
 
@@ -409,4 +409,4 @@ For 10,000 concurrent purchase attempts for 100 units:
 | Payment Service | Idempotency key — 10,000 retries still create 1 payment |
 | Order Service | `reservation_id UNIQUE` — 100 payments → exactly 100 orders |
 | RabbitMQ | Durable queues handle burst of 100 `PaymentConfirmed` events trivially |
-| PostgreSQL | Connection pooling (pg-pool, max 20 connections per service instance) |
+| MongoDB | Connection pooling (pg-pool, max 20 connections per service instance) |

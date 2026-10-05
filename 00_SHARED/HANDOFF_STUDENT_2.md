@@ -15,18 +15,18 @@ This is the most critical service in the platform during a flash sale. It is the
 
 You must design within the boundaries established in `00_SHARED/ARCHITECTURE_CONTRACT.md`.
 
-*   **Database:** PostgreSQL ONLY. Do not use Redis as the source of truth for stock counts.
+*   **Database:** MongoDB ONLY. Do not use Redis as the source of truth for stock counts.
 *   **Concurrency Mechanism:** You must use **Atomic Conditional Updates** (not pessimistic locking, not optimistic locking version checks).
 *   **Reservation TTL:** Exactly 5 minutes.
 *   **Admission Control:** Do NOT build queueing or rate limiting into your service. Assume StormShield handles that. You will receive requests containing a validated Admission Token.
 
 ## 3. The Core Concurrency Requirement
 
-You must design the exact SQL queries and repository layer logic to handle this scenario:
+You must design the exact MongoDB queries and repository layer logic to handle this scenario:
 *   50 concurrent requests hit your service at the exact same millisecond.
 *   They all attempt to reserve the same `product_id`.
 
-Your LLD must feature this exact SQL pattern (or an ORM equivalent that compiles to this):
+Your LLD must feature this exact MongoDB pattern (or an ORM equivalent that compiles to this):
 
 ```sql
 UPDATE inventory

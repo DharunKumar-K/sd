@@ -212,7 +212,7 @@ Cancel is idempotent. Cancelling an already-cancelled reservation returns the cu
 **Purpose:** Read current stock levels. Used by Product Service and frontend for display.
 
 > [!NOTE]
-> This is a **read-only** endpoint. It does NOT reserve stock. Stock counts are served from Redis cache (5-second TTL) and fall back to PostgreSQL.
+> This is a **read-only** endpoint. It does NOT reserve stock. Stock counts are served from Redis cache (5-second TTL) and fall back to MongoDB.
 
 ### Request
 
@@ -248,7 +248,7 @@ Cache-Control: max-age=5
 | `soldQuantity` | integer | Permanently sold |
 | `totalStock` | integer | Sum of above — always = initial stock |
 | `isAvailable` | boolean | `availableQuantity > 0` |
-| `cacheSource` | string | `redis` or `postgres` |
+| `cacheSource` | string | `redis` or `mongodb` |
 
 ---
 

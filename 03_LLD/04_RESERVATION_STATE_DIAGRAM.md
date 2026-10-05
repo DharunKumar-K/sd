@@ -74,11 +74,11 @@ flowchart TD
 
 ---
 
-## 4. Transition Table with Side Effects
+## 4. Transition Collection with Side Effects
 
 | Transition | Trigger | Inventory Update | Events Published |
 |------------|---------|-----------------|-----------------|
-| `→ RESERVED` | `affected_rows = 1` from atomic SQL | `available -= qty`, `reserved += qty` | `ReservationCreated` |
+| `→ RESERVED` | `affected_rows = 1` from atomic MongoDB | `available -= qty`, `reserved += qty` | `ReservationCreated` |
 | `RESERVED → PAYMENT_PENDING` | HTTP call from Checkout Service | None | None |
 | `RESERVED → RELEASED` | TTL expired (cron) | `available += qty`, `reserved -= qty` | `ReservationExpired`, `ReservationReleased` |
 | `RESERVED → RELEASED` | Customer cancel (HTTP) | `available += qty`, `reserved -= qty` | `ReservationReleased` |
@@ -101,7 +101,7 @@ INVARIANT at all times:
 
 **How each transition preserves the invariant:**
 
-- `→ RESERVED`: Atomic SQL decrements `available` and increments `reserved` in same statement. PostgreSQL row lock ensures serialization. The `WHERE available_quantity >= qty` prevents going below 0.
+- `→ RESERVED`: Atomic MongoDB decrements `available` and increments `reserved` in same statement. MongoDB row lock ensures serialization. The `WHERE available_quantity >= qty` prevents going below 0.
 - `→ RELEASED`: Always increments `available` by exactly what was decremented at reservation. Conservation holds.
 - `→ SOLD`: Always decrements `reserved` by exactly what was reserved. `sold` increments by same amount. Conservation holds.
 - `RESERVED → PAYMENT_PENDING`: No inventory change. Conservation trivially holds.
@@ -126,7 +126,7 @@ SOLD:
 ```
 
 > [!WARNING]
-> Attempting to transition from `SOLD` or `RELEASED` to any other state is a domain error and must be rejected by `ReservationPolicy.canTransition()`. These states are immutable once entered.
+> Attempting to transition from `SOLD` or `RELEASED` to any other state is a domain error and must be rejected by `ReservationPolicy.canTransition()`. These states are immucollection once entered.
 
 ---
 

@@ -19,12 +19,12 @@ Do NOT design anything that conflicts with the schemas, states, or API semantics
 
 ---
 
-## 2. Database Schema (PostgreSQL)
+## 2. Database Schema (MongoDB)
 
-### 2.1 `inventory` Table
+### 2.1 `inventory` Collection
 
 ```sql
-CREATE TABLE inventory (
+CREATE COLLECTION inventory (
     inventory_id        UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id          UUID         NOT NULL REFERENCES products(product_id),
     available_quantity  INTEGER      NOT NULL DEFAULT 0,
@@ -50,7 +50,7 @@ reserved_quantity  >= 0
 sold_quantity      >= 0
 ```
 
-### 2.2 `inventory_reservation` Table
+### 2.2 `inventory_reservation` Collection
 
 ```sql
 CREATE TYPE reservation_status AS ENUM (
@@ -61,7 +61,7 @@ CREATE TYPE reservation_status AS ENUM (
     'RELEASED'
 );
 
-CREATE TABLE inventory_reservation (
+CREATE COLLECTION inventory_reservation (
     reservation_id   UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
     product_id       UUID              NOT NULL REFERENCES products(product_id),
     customer_id      UUID              NOT NULL REFERENCES customers(customer_id),
@@ -84,10 +84,10 @@ CREATE INDEX idx_reservation_expires_at     ON inventory_reservation(expires_at)
     WHERE status IN ('RESERVED', 'PAYMENT_PENDING');
 ```
 
-### 2.3 `processed_events` Table (Idempotency)
+### 2.3 `processed_events` Collection (Idempotency)
 
 ```sql
-CREATE TABLE processed_events (
+CREATE COLLECTION processed_events (
     event_id     UUID         PRIMARY KEY,
     event_type   VARCHAR(100) NOT NULL,
     result       JSONB,
@@ -123,7 +123,7 @@ PAYMENT_PENDING → RELEASED
 
 | From → To | Trigger |
 |-----------|---------|
-| `→ RESERVED` | Inventory Service atomic SQL `affected_rows = 1` |
+| `→ RESERVED` | Inventory Service atomic MongoDB `affected_rows = 1` |
 | `RESERVED → PAYMENT_PENDING` | Checkout Service HTTP call |
 | `PAYMENT_PENDING → CONFIRMED` | `PaymentConfirmed` RabbitMQ event |
 | `CONFIRMED → SOLD` | `OrderConfirmed` RabbitMQ event |
@@ -205,7 +205,7 @@ Before initiating payment, Checkout Service MUST:
 ```
 Algorithm:
   1. Receive PaymentConfirmed / PaymentFailed / OrderConfirmed
-  2. Check processed_events table for event_id
+  2. Check processed_events collection for event_id
   3. IF found → ACK and skip (already processed)
   4. IF new → process in transaction → record event_id → ACK
   5. ON failure → NACK with requeue → retry up to 3 times
@@ -242,7 +242,7 @@ WHERE product_id = :product_id
 
 ## 8. Transaction Boundaries
 
-### What is in ONE PostgreSQL transaction (inside Inventory Service):
+### What is in ONE MongoDB transaction (inside Inventory Service):
 
 ```
 BEGIN
@@ -271,7 +271,7 @@ COMMIT
 | Failure | Behaviour | Recovery |
 |---------|-----------|---------|
 | DB unavailable during reservation | 500 returned, no inventory change | Client retries with same idempotency key |
-| DB unavailable during expiry cron | Cron retries on next 30s cycle | Max 30s delay — acceptable for 5min TTL |
+| DB unavailable during expiry cron | Cron retries on next 30s cycle | Max 30s delay — accepcollection for 5min TTL |
 | PaymentConfirmed event not received | Reservation stays PAYMENT_PENDING until TTL | TTL expiry cron releases after 5min |
 | PaymentFailed event not received | Reservation stays PAYMENT_PENDING until TTL | TTL expiry releases after 5min |
 | RabbitMQ publish fails post-commit | Event retried (outbox pattern or at-least-once) | StormShield may not get ReservationReleased; fallback: StormShield polls availability |
@@ -300,7 +300,7 @@ Student 3's Checkout Service does not need to enforce this — it is enforced be
 
 Before finalising your designs, confirm:
 
-- [ ] ER diagram includes `inventory` and `inventory_reservation` tables with exact column names above
+- [ ] ER diagram includes `inventory` and `inventory_reservation` collections with exact column names above
 - [ ] No service other than Inventory & Reservation Service has a foreign key or write access to `inventory` or `inventory_reservation`
 - [ ] Checkout Service reads reservation via `GET /api/v1/reservations/:id` before initiating payment
 - [ ] Payment Service publishes `PaymentConfirmed` and `PaymentFailed` to `payment.confirmed` and `payment.failed` routing keys

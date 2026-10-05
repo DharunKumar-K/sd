@@ -14,7 +14,7 @@ You are responsible for the Low-Level Design (LLD) of the **Checkout, Payment, O
 
 You must design within the boundaries established in `00_SHARED/ARCHITECTURE_CONTRACT.md`.
 
-*   **Database:** PostgreSQL. Define the schemas (DDL) for all domains.
+*   **Database:** MongoDB. Define the schemas (DDL) for all domains.
 *   **Communication:** 
     *   Checkout -> Payment is **Synchronous** (REST).
     *   Payment -> Order -> Fulfilment -> Shipment is **Asynchronous** (RabbitMQ).
@@ -30,7 +30,7 @@ Your LLD must clearly show how you use RabbitMQ to ensure **Eventual Consistency
 
 ## 4. Specific Deliverables Expected in Your LLD
 
-1.  **Detailed Database Schemas:** ERD and DDL for all services (Product, Cart, Sale, Inventory, Payment, Order, etc.). Ensure logical separation (e.g., schemas or distinct table prefixes).
+1.  **Detailed Database Schemas:** ERD and DDL for all services (Product, Cart, Sale, Inventory, Payment, Order, etc.). Ensure logical separation (e.g., schemas or distinct collection prefixes).
 2.  **API Contracts:** Detailed OpenAPI/Swagger specifications for the endpoints listed in `00_SHARED/API_CONTRACT.md`. Include request/response bodies and error codes.
 3.  **Payment Recovery Sequence:** A sequence diagram showing how a `PaymentConfirmed` event is published, consumed by the Order Service, and how Dead Letter Queues (DLQ) are handled if the Order Service fails to process it.
 4.  **Idempotency Design:** How do you handle `X-Idempotency-Key` for Payment Initiation? How do you handle duplicate webhooks from the payment gateway?

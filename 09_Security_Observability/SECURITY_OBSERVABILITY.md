@@ -12,7 +12,7 @@ The GlowRush platform employs a defense-in-depth strategy to protect customer da
 
 | Component             | Configuration / Strategy                                                                 |
 | --------------------- | ---------------------------------------------------------------------------------------- |
-| **AWS WAF**           | Blocks OWASP Top 10 vulnerabilities (SQLi, XSS, etc.). Implements IP reputation blocking and basic bot detection to filter malicious traffic before it hits the ALB. |
+| **AWS WAF**           | Blocks OWASP Top 10 vulnerabilities (MongoDBi, XSS, etc.). Implements IP reputation blocking and basic bot detection to filter malicious traffic before it hits the ALB. |
 | **CloudFront CDN**    | Enforces HTTPS (TLS 1.3). Hides origin servers from direct internet access. Protects against volumetric DDoS attacks. |
 | **Application Load Balancer (ALB)** | Terminates SSL. Only accepts traffic from CloudFront IP ranges. Drop invalid HTTP requests. |
 
@@ -31,7 +31,7 @@ The GlowRush platform employs a defense-in-depth strategy to protect customer da
 
 ### 1.4 Data Protection
 
-- **Data at Rest:** PostgreSQL databases, Redis clusters, and RabbitMQ storage volumes are encrypted using AWS KMS managed keys.
+- **Data at Rest:** MongoDB databases, Redis clusters, and RabbitMQ storage volumes are encrypted using AWS KMS managed keys.
 - **Data in Transit:** All external and internal service-to-service communication occurs over HTTPS/TLS.
 - **Secrets Management:** Passwords, API keys (Payment Gateway, SMS provider), and database credentials are stored in AWS Secrets Manager and injected into containers securely (never hardcoded or in plain env files).
 - **PCI Compliance:** GlowRush does **NOT** store credit card numbers. All sensitive payment data is handled via the external Payment Gateway (e.g., Razorpay/Stripe) tokenization flow.

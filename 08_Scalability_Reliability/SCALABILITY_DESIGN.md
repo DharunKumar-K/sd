@@ -59,7 +59,7 @@ These services have database write contention that limits effective horizontal s
 
 | Service                         | Normal | Flash | Max | Limiting Factor                       |
 | ------------------------------- | ------ | ----- | --- | ------------------------------------- |
-| Inventory & Reservation Service | 2      | 5     | 8   | PostgreSQL row lock on inventory      |
+| Inventory & Reservation Service | 2      | 5     | 8   | MongoDB atomic update on inventory      |
 | Payment Service                 | 2      | 5     | 8   | External gateway rate limits          |
 | Order Service                   | 2      | 3     | 5   | Low event volume (~100 during sale)   |
 | Fulfilment Service              | 2      | 2     | 3   | Not flash-sale critical               |
@@ -128,13 +128,13 @@ When queue depth exceeds thresholds:
 
 ## 5. Database Scaling
 
-### 5.1 PostgreSQL Scaling Strategy
+### 5.1 MongoDB Scaling Strategy
 
 ```mermaid
 graph TD
     subgraph "Write Path"
         APP[Service Instances] --> PGB[PgBouncer<br/>Connection Pooling]
-        PGB --> PG_PRI[(PostgreSQL Primary<br/>Handles ALL writes)]
+        PGB --> PG_PRI[(MongoDB Primary<br/>Handles ALL writes)]
     end
 
     subgraph "Read Path"
@@ -175,7 +175,7 @@ graph TD
 
 If flash sales scale beyond 10x:
 
-| Table                   | Partition Strategy | Key              |
+| Collection                   | Partition Strategy | Key              |
 | ----------------------- | ------------------ | ---------------- |
 | `orders`                | Range by month     | `created_at`     |
 | `payments`              | Range by month     | `created_at`     |
@@ -218,7 +218,7 @@ Response: 429 Too Many Requests + Retry-After header
 | Inventory Service  | `affected_rows = 0` → fast rejection             | Out of stock                   |
 | Payment Service    | Circuit breaker → fast failure                    | Gateway unavailable            |
 | RabbitMQ           | Consumer prefetch limit                            | Consumer busy                  |
-| PostgreSQL         | PgBouncer queue                                   | All connections busy           |
+| MongoDB         | PgBouncer queue                                   | All connections busy           |
 
 ---
 

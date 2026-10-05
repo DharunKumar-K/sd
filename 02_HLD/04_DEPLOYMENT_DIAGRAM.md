@@ -38,7 +38,7 @@ graph TB
                 NOTIF_A["Notification Svc #1"]
             end
             subgraph "Private Subnet A - Data"
-                PG_PRI["🐘 PostgreSQL Primary"]
+                PG_PRI["🐘 MongoDB Primary"]
                 REDIS_A["⚡ Redis Node A (Primary)"]
                 RMQ_A["🐇 RabbitMQ Node A"]
             end
@@ -64,7 +64,7 @@ graph TB
                 NOTIF_B["Notification Svc #2"]
             end
             subgraph "Private Subnet B - Data"
-                PG_REP["🐘 PostgreSQL Standby / Read Replica"]
+                PG_REP["🐘 MongoDB Standby / Read Replica"]
                 REDIS_B["⚡ Redis Node B (Replica)"]
                 RMQ_B["🐇 RabbitMQ Node B"]
             end
@@ -113,7 +113,7 @@ graph TB
 | Public Subnet B       | `10.0.2.0/24`      | AZ-B      | ALB, NAT Gateway                           |
 | Private Subnet A      | `10.0.10.0/24`     | AZ-A      | Compute containers                         |
 | Private Subnet B      | `10.0.20.0/24`     | AZ-B      | Compute containers                         |
-| Private Data Subnet A | `10.0.100.0/24`    | AZ-A      | PostgreSQL, Redis, RabbitMQ                |
+| Private Data Subnet A | `10.0.100.0/24`    | AZ-A      | MongoDB, Redis, RabbitMQ                |
 | Private Data Subnet B | `10.0.200.0/24`    | AZ-B      | Replicas                                   |
 
 ### 3.2 Security Groups
@@ -170,11 +170,11 @@ schedule:
 
 ## 5. Database Deployment
 
-### 5.1 PostgreSQL (RDS Multi-AZ)
+### 5.1 MongoDB (RDS Multi-AZ)
 
 | Parameter              | Value                                   |
 | ---------------------- | --------------------------------------- |
-| Engine                 | PostgreSQL 16                           |
+| Engine                 | MongoDB 16                           |
 | Instance class (normal)| `db.r6g.large` (2 vCPU, 16 GB RAM)     |
 | Instance class (flash) | `db.r6g.xlarge` (4 vCPU, 32 GB RAM)    |
 | Storage                | 100 GB gp3 (3000 IOPS, 125 MB/s)       |
@@ -237,7 +237,7 @@ graph LR
 | ---------------------- | ---------------------------------------------- | --------- | --------- |
 | Single instance crash  | Auto-restart + ALB health check removes        | < 30s     | 0         |
 | AZ failure             | Multi-AZ failover (ALB routes to healthy AZ)   | < 60s     | 0         |
-| PostgreSQL primary down| Automatic failover to standby                  | < 2 min   | < 1 min   |
+| MongoDB primary down| Automatic failover to standby                  | < 2 min   | < 1 min   |
 | Redis node failure     | Replica promoted to primary                    | < 30s     | < 1s      |
 | RabbitMQ node failure  | Quorum queues survive with 2/3 nodes           | 0         | 0         |
 | Full region failure    | Manual failover (out of scope for hackathon)   | Hours     | < 1 min   |

@@ -73,10 +73,10 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Product catalog management — CRUD, search, categories              |
 | **Owned Data**         | Products, categories, images, descriptions, pricing                |
 | **Main APIs**          | `GET /products` — list/search; `GET /products/:id` — detail; `POST/PUT/DELETE /products` — admin CRUD |
-| **Sync Dependencies**  | PostgreSQL (read), Redis (cache)                                   |
+| **Sync Dependencies**  | MongoDB (read), Redis (cache)                                   |
 | **Async Events**       | Publishes `ProductUpdated` when catalog changes                    |
-| **Scaling Strategy**   | Horizontal — read-heavy, Redis-cached, PostgreSQL read replicas    |
-| **Failure Strategy**   | Serve from Redis cache if PostgreSQL is unavailable; stale data acceptable for catalog |
+| **Scaling Strategy**   | Horizontal — read-heavy, Redis-cached, MongoDB read replicas    |
+| **Failure Strategy**   | Serve from Redis cache if MongoDB is unavailable; stale data accepcollection for catalog |
 
 **Key Responsibilities:**
 - Product CRUD (admin)
@@ -94,10 +94,10 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Shopping cart management — add, remove, update items               |
 | **Owned Data**         | Cart records (customer → items mapping)                            |
 | **Main APIs**          | `GET /cart` — view cart; `POST /cart/items` — add item; `PUT /cart/items/:id` — update quantity; `DELETE /cart/items/:id` — remove item |
-| **Sync Dependencies**  | Redis (active cart), PostgreSQL (persisted cart), Product Service    |
+| **Sync Dependencies**  | Redis (active cart), MongoDB (persisted cart), Product Service    |
 | **Async Events**       | None                                                                |
-| **Scaling Strategy**   | Horizontal — Redis for hot cart data, PostgreSQL for persistence   |
-| **Failure Strategy**   | Redis miss falls back to PostgreSQL; cart data is reconstructible  |
+| **Scaling Strategy**   | Horizontal — Redis for hot cart data, MongoDB for persistence   |
+| **Failure Strategy**   | Redis miss falls back to MongoDB; cart data is reconstructible  |
 
 **Key Responsibilities:**
 - Cart CRUD operations
@@ -114,10 +114,10 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Flash sale configuration — schedules, pricing rules, sale metadata |
 | **Owned Data**         | Sale records (sale_id, product_id, start_time, end_time, sale_price, total_units) |
 | **Main APIs**          | `GET /sales/active` — current flash sale; `GET /sales/:id` — sale detail; `POST /sales` — admin create sale |
-| **Sync Dependencies**  | PostgreSQL, Redis (cache sale config)                               |
+| **Sync Dependencies**  | MongoDB, Redis (cache sale config)                               |
 | **Async Events**       | Publishes `SaleStarted`, `SaleEnded`                               |
 | **Scaling Strategy**   | Horizontal — read-heavy, heavily cached                            |
-| **Failure Strategy**   | Serve from Redis cache; sale config is immutable once started      |
+| **Failure Strategy**   | Serve from Redis cache; sale config is immucollection once started      |
 
 **Key Responsibilities:**
 - Flash sale CRUD (admin)
@@ -132,12 +132,12 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | Attribute              | Detail                                                              |
 | ---------------------- | ------------------------------------------------------------------- |
 | **Purpose**            | **Single source of truth** for stock levels and reservations       |
-| **Owned Data**         | `inventory` table, `inventory_reservation` table                   |
+| **Owned Data**         | `inventory` collection, `inventory_reservation` collection                   |
 | **Main APIs**          | `POST /inventory/reserve` — atomic reservation; `GET /inventory/:productId/availability` — stock check; `POST /inventory/release` — manual release; `POST /inventory/confirm` — mark as sold |
-| **Sync Dependencies**  | PostgreSQL (transactional), Redis (stock cache)                    |
+| **Sync Dependencies**  | MongoDB (transactional), Redis (stock cache)                    |
 | **Async Events**       | Subscribes to `PaymentConfirmed`, `PaymentFailed`; Publishes `ReservationExpired`, `ReservationReleased`, `InventoryDepleted` |
-| **Scaling Strategy**   | **Limited horizontal** — write contention on inventory row; use connection pooling + atomic SQL; read replicas for availability checks |
-| **Failure Strategy**   | PostgreSQL transaction rollback ensures consistency; reservation expiry cron handles orphans |
+| **Scaling Strategy**   | **Limited horizontal** — write contention on inventory row; use connection pooling + atomic MongoDB; read replicas for availability checks |
+| **Failure Strategy**   | MongoDB transaction rollback ensures consistency; reservation expiry cron handles orphans |
 
 **Key Responsibilities:**
 - Atomic conditional inventory reservation (the canonical UPDATE)
@@ -149,7 +149,7 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 - **This service is the FINAL AUTHORITY for inventory consistency**
 
 **Critical Constraint:** This is the hottest service during flash sales. Student 2 must design for:
-- Row-level contention on `inventory` table
+- Row-level contention on `inventory` collection
 - Connection pool exhaustion
 - Reservation expiry race conditions
 
@@ -176,7 +176,7 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Process payments via external gateway; ensure idempotency          |
 | **Owned Data**         | Payment records (payment_id, reservation_id, amount, status, idempotency_key, gateway_ref) |
 | **Main APIs**          | `POST /payments/initiate` — create payment; `GET /payments/:id` — status; `POST /payments/webhook` — gateway callback |
-| **Sync Dependencies**  | External Payment Gateway, PostgreSQL                                |
+| **Sync Dependencies**  | External Payment Gateway, MongoDB                                |
 | **Async Events**       | Publishes `PaymentConfirmed`, `PaymentFailed`                      |
 | **Scaling Strategy**   | Horizontal — but limited by external gateway rate limits           |
 | **Failure Strategy**   | Idempotency key prevents duplicates; retry with backoff; circuit breaker to gateway; DLQ for unprocessable webhooks |
@@ -190,7 +190,7 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Create and manage orders; track order lifecycle                    |
 | **Owned Data**         | Order records, order items, order status history                   |
 | **Main APIs**          | `GET /orders` — list orders; `GET /orders/:id` — order detail; `POST /orders` — create (internal) |
-| **Sync Dependencies**  | PostgreSQL                                                          |
+| **Sync Dependencies**  | MongoDB                                                          |
 | **Async Events**       | Subscribes to `PaymentConfirmed`; Publishes `OrderCreated`, `OrderConfirmed` |
 | **Scaling Strategy**   | Horizontal — event-driven creation reduces sync pressure           |
 | **Failure Strategy**   | Idempotent order creation (one order per reservation_id); DLQ for failed event processing |
@@ -204,7 +204,7 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Manage order fulfilment — picking, packing, handoff to shipping    |
 | **Owned Data**         | Fulfilment records, packing state                                  |
 | **Main APIs**          | `GET /fulfilment/:orderId` — status; `POST /fulfilment/process` — internal |
-| **Sync Dependencies**  | PostgreSQL                                                          |
+| **Sync Dependencies**  | MongoDB                                                          |
 | **Async Events**       | Subscribes to `OrderConfirmed`; Publishes `ShipmentCreated`       |
 | **Scaling Strategy**   | Horizontal — not flash-sale critical                               |
 | **Failure Strategy**   | Retry event processing; manual intervention queue                  |
@@ -218,7 +218,7 @@ This catalog defines every service in the GlowRush platform, its purpose, owned 
 | **Purpose**            | Manage shipping — carrier integration, tracking, delivery updates  |
 | **Owned Data**         | Shipment records, tracking numbers, carrier responses              |
 | **Main APIs**          | `GET /shipments/:id` — tracking; `POST /shipments/webhook` — carrier callback |
-| **Sync Dependencies**  | External Shipping Provider, PostgreSQL                              |
+| **Sync Dependencies**  | External Shipping Provider, MongoDB                              |
 | **Async Events**       | Subscribes to `ShipmentCreated`; Publishes `ShipmentDispatched`, `ShipmentDelivered` |
 | **Scaling Strategy**   | Horizontal — not flash-sale critical                               |
 | **Failure Strategy**   | Retry carrier API; fallback tracking via polling                   |
